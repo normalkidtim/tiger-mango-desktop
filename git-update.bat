@@ -12,3 +12,6 @@ git push origin main
 
 echo ✅ Done!
 pause
+
+
+REM ./git-update.bat
