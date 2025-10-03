@@ -33,6 +33,7 @@ export default function App() {
   const [weeklyUsage, setWeeklyUsage] = useState([]);
   const [monthlyUsage, setMonthlyUsage] = useState([]);
   const [purchaseHistory, setPurchaseHistory] = useState([]);
+  const [filteredHistory, setFilteredHistory] = useState([]);
   const [stockLogs, setStockLogs] = useState([]);
   const [activeTab, setActiveTab] = useState("inventory");
   const [salesData, setSalesData] = useState({
@@ -42,11 +43,55 @@ export default function App() {
     bestSellingCups: [],
     dailyReport: [],
     weeklyReport: [],
-    monthlyReport: []
+    monthlyReport: [],
+    todaySales: 0,
+    thisWeekSales: 0,
+    thisMonthSales: 0,
+    todayEarnings: 0,
+    thisWeekEarnings: 0,
+    thisMonthEarnings: 0
   });
+
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sizeFilter, setSizeFilter] = useState("all");
+  const [addOnFilter, setAddOnFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  // Sidebar state
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   // Colors for charts
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
+
+  // Get unique values for filters
+  const uniqueSizes = [...new Set(purchaseHistory.map(order => order.size))];
+  const uniqueAddOns = [...new Set(purchaseHistory.flatMap(order => order.addOns || []))];
+  const uniqueDates = [...new Set(purchaseHistory
+    .filter(order => order.createdAt)
+    .map(order => order.createdAt.toDate().toLocaleDateString())
+  )].sort((a, b) => new Date(b) - new Date(a));
+
+  // Handle responsiveness
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) {
+        setSidebarCollapsed(true);
+      } else {
+        setSidebarCollapsed(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Initial check
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     // ✅ Inventory listener
@@ -66,6 +111,7 @@ export default function App() {
         orders.push({ id: docSnap.id, ...docSnap.data() });
       });
       setPurchaseHistory(orders);
+      setFilteredHistory(orders); // Initialize filtered history
       processUsageData(orders);
       processSalesAnalytics(orders);
     });
@@ -86,6 +132,82 @@ export default function App() {
       unsubLogs();
     };
   }, []);
+
+  // Apply filters whenever filter states change
+  useEffect(() => {
+    applyFilters();
+  }, [searchTerm, sizeFilter, addOnFilter, dateFilter, startDate, endDate, purchaseHistory]);
+
+  const applyFilters = () => {
+    let filtered = [...purchaseHistory];
+
+    // Search filter
+    if (searchTerm) {
+      filtered = filtered.filter(order => 
+        order.flavor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (order.addOns && order.addOns.some(addon => 
+          addon.toLowerCase().includes(searchTerm.toLowerCase())
+        )) ||
+        order.notes?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Size filter
+    if (sizeFilter !== "all") {
+      filtered = filtered.filter(order => order.size === sizeFilter);
+    }
+
+    // Add-on filter
+    if (addOnFilter !== "all") {
+      filtered = filtered.filter(order => 
+        order.addOns && order.addOns.includes(addOnFilter)
+      );
+    }
+
+    // Date filter
+    if (dateFilter !== "all") {
+      filtered = filtered.filter(order => {
+        if (!order.createdAt) return false;
+        const orderDate = order.createdAt.toDate().toLocaleDateString();
+        return orderDate === dateFilter;
+      });
+    }
+
+    // Date range filter
+    if (startDate && endDate) {
+      filtered = filtered.filter(order => {
+        if (!order.createdAt) return false;
+        const orderDate = order.createdAt.toDate();
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999); // Include entire end date
+        
+        return orderDate >= start && orderDate <= end;
+      });
+    }
+
+    setFilteredHistory(filtered);
+  };
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setSizeFilter("all");
+    setAddOnFilter("all");
+    setDateFilter("all");
+    setStartDate("");
+    setEndDate("");
+  };
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
+
+  const handleTabClick = (tab) => {
+    setActiveTab(tab);
+    if (isMobile) {
+      setSidebarCollapsed(true);
+    }
+  };
 
   // ✅ Process usage data for time-based charts
   function processUsageData(orders) {
@@ -125,14 +247,27 @@ export default function App() {
       "1 Liter": 0
     };
 
-    const dailySales = {};
-    const weeklySales = {};
-    const monthlySales = {};
+    const today = new Date().toLocaleDateString();
+    const currentWeek = `Week ${getWeekNumber(new Date())}`;
+    const currentMonth = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    let todaySales = 0;
+    let thisWeekSales = 0;
+    let thisMonthSales = 0;
+    let todayEarnings = 0;
+    let thisWeekEarnings = 0;
+    let thisMonthEarnings = 0;
+
+    const weeklyData = {};
+    const monthlyData = {};
 
     orders.forEach((order) => {
       if (!order.createdAt) return;
       const dateObj = order.createdAt.toDate();
-      
+      const orderDate = dateObj.toLocaleDateString();
+      const orderWeek = `Week ${getWeekNumber(dateObj)}`;
+      const orderMonth = dateObj.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
       // Flavor sales
       flavorSales[order.flavor] = (flavorSales[order.flavor] || 0) + order.quantity;
       
@@ -151,15 +286,42 @@ export default function App() {
         });
       }
 
-      // Time-based sales
-      const dayKey = dateObj.toLocaleDateString();
-      const weekKey = `Week ${getWeekNumber(dateObj)}`;
-      const monthKey = dateObj.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      // Today's sales and earnings
+      if (orderDate === today) {
+        todaySales += order.quantity;
+        todayEarnings += order.price || 0;
+      }
 
-      dailySales[dayKey] = (dailySales[dayKey] || 0) + order.quantity;
-      weeklySales[weekKey] = (weeklySales[weekKey] || 0) + order.quantity;
-      monthlySales[monthKey] = (monthlySales[monthKey] || 0) + order.quantity;
+      // This week's sales and earnings
+      if (orderWeek === currentWeek) {
+        thisWeekSales += order.quantity;
+        thisWeekEarnings += order.price || 0;
+      }
+
+      // This month's sales and earnings
+      if (orderMonth === currentMonth) {
+        thisMonthSales += order.quantity;
+        thisMonthEarnings += order.price || 0;
+      }
+
+      // Weekly data for chart
+      weeklyData[orderWeek] = (weeklyData[orderWeek] || 0) + order.quantity;
+
+      // Monthly data for chart
+      monthlyData[orderMonth] = (monthlyData[orderMonth] || 0) + order.quantity;
     });
+
+    // Prepare weekly report (last 8 weeks)
+    const weeklyReport = Object.entries(weeklyData)
+      .map(([week, quantity]) => ({ week, quantity }))
+      .sort((a, b) => parseInt(a.week.split(' ')[1]) - parseInt(b.week.split(' ')[1]))
+      .slice(-8);
+
+    // Prepare monthly report (last 6 months)
+    const monthlyReport = Object.entries(monthlyData)
+      .map(([month, quantity]) => ({ month, quantity }))
+      .sort((a, b) => new Date(a.month) - new Date(b.month))
+      .slice(-6);
 
     setSalesData({
       bestSellingFlavors: Object.entries(flavorSales)
@@ -179,20 +341,18 @@ export default function App() {
       bestSellingCups: Object.entries(cupSales)
         .map(([name, quantity]) => ({ name, quantity })),
       
-      dailyReport: Object.entries(dailySales)
-        .map(([date, quantity]) => ({ date, quantity }))
-        .sort((a, b) => new Date(a.date) - new Date(b.date))
-        .slice(-7),
+      dailyReport: [{ date: "Today", quantity: todaySales }],
       
-      weeklyReport: Object.entries(weeklySales)
-        .map(([week, quantity]) => ({ week, quantity }))
-        .sort((a, b) => parseInt(a.week.split(' ')[1]) - parseInt(b.week.split(' ')[1]))
-        .slice(-8),
+      weeklyReport: weeklyReport,
       
-      monthlyReport: Object.entries(monthlySales)
-        .map(([month, quantity]) => ({ month, quantity }))
-        .sort((a, b) => new Date(a.month) - new Date(b.month))
-        .slice(-6)
+      monthlyReport: monthlyReport,
+
+      todaySales: todaySales,
+      thisWeekSales: thisWeekSales,
+      thisMonthSales: thisMonthSales,
+      todayEarnings: todayEarnings,
+      thisWeekEarnings: thisWeekEarnings,
+      thisMonthEarnings: thisMonthEarnings
     });
   }
 
@@ -222,16 +382,60 @@ export default function App() {
   return (
     <div className="dashboard">
       {/* Sidebar */}
-      <div className="sidebar">
-        <h2 className="sidebar-title">Tiger Mango</h2>
-        <button onClick={() => setActiveTab("inventory")}>📦 Inventory</button>
-        <button onClick={() => setActiveTab("analytics")}>📊 Sales Analytics</button>
-        <button onClick={() => setActiveTab("history")}>📝 Purchase History</button>
-        <button onClick={() => setActiveTab("logs")}>📜 Stock Logs</button>
+      <div className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
+        <div className="sidebar-header">
+          <h2 className="sidebar-title">
+            {!sidebarCollapsed && "Tiger Mango"}
+            {sidebarCollapsed && "TM"}
+          </h2>
+          <button className="sidebar-toggle" onClick={toggleSidebar}>
+            {sidebarCollapsed ? '→' : '←'}
+          </button>
+        </div>
+        
+        <button 
+          onClick={() => handleTabClick("inventory")} 
+          className={activeTab === "inventory" ? "active" : ""}
+        >
+          {sidebarCollapsed ? "📦" : "📦 Inventory"}
+        </button>
+        <button 
+          onClick={() => handleTabClick("analytics")} 
+          className={activeTab === "analytics" ? "active" : ""}
+        >
+          {sidebarCollapsed ? "📊" : "📊 Sales Analytics"}
+        </button>
+        <button 
+          onClick={() => handleTabClick("history")} 
+          className={activeTab === "history" ? "active" : ""}
+        >
+          {sidebarCollapsed ? "📝" : "📝 Purchase History"}
+        </button>
+        <button 
+          onClick={() => handleTabClick("logs")} 
+          className={activeTab === "logs" ? "active" : ""}
+        >
+          {sidebarCollapsed ? "📜" : "📜 Stock Logs"}
+        </button>
       </div>
 
       {/* Main Content */}
-      <div className="main-content">
+      <div className={`main-content ${sidebarCollapsed ? 'expanded' : ''}`}>
+        {/* Mobile header with toggle */}
+        {isMobile && (
+          <div className="mobile-header">
+            <button className="mobile-sidebar-toggle" onClick={toggleSidebar}>
+              ☰
+            </button>
+            <h1 className="mobile-title">
+              {activeTab === "inventory" && "Inventory"}
+              {activeTab === "analytics" && "Sales Analytics"}
+              {activeTab === "history" && "Purchase History"}
+              {activeTab === "logs" && "Stock Logs"}
+            </h1>
+          </div>
+        )}
+
         {activeTab === "inventory" && (
           <div className="grid">
             <div className="card">
@@ -264,49 +468,79 @@ export default function App() {
 
         {activeTab === "analytics" && (
           <div className="analytics-container">
-            <h1>📊 Sales Analytics Dashboard</h1>
+            {!isMobile && <h1>📊 Sales Analytics Dashboard</h1>}
             
-            {/* Sales Trends Section */}
+            {/* Charts Section with Integrated Orders and Earnings */}
             <div className="section">
-              <h2>📈 Sales Trends</h2>
+              <h2>📊 Sales Overview</h2>
               <div className="chart-grid">
                 <div className="chart-card">
-                  <h3>Daily Sales (Last 7 Days)</h3>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <BarChart data={salesData.dailyReport}>
+                  <h3>Today's Sales</h3>
+                  <div className="chart-summary">
+                    <div className="summary-number">{salesData.todaySales}</div>
+                    <div className="summary-label">Total Orders</div>
+                  </div>
+                  <div className="earnings-summary">
+                    <div className="earnings-amount">₱{salesData.todayEarnings}</div>
+                    <div className="earnings-label">Total Earnings</div>
+                  </div>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart 
+                      data={salesData.dailyReport}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" />
                       <YAxis />
                       <Tooltip content={<CustomTooltip />} />
-                      <Legend />
                       <Bar dataKey="quantity" fill="#8884d8" name="Orders" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
 
                 <div className="chart-card">
-                  <h3>Weekly Sales Trend</h3>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <LineChart data={salesData.weeklyReport}>
+                  <h3>Weekly Sales</h3>
+                  <div className="chart-summary">
+                    <div className="summary-number">{salesData.thisWeekSales}</div>
+                    <div className="summary-label">Total Orders</div>
+                  </div>
+                  <div className="earnings-summary">
+                    <div className="earnings-amount">₱{salesData.thisWeekEarnings}</div>
+                    <div className="earnings-label">Total Earnings</div>
+                  </div>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart 
+                      data={salesData.weeklyReport}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="week" />
                       <YAxis />
                       <Tooltip content={<CustomTooltip />} />
-                      <Legend />
-                      <Line type="monotone" dataKey="quantity" stroke="#82ca9d" name="Orders" />
-                    </LineChart>
+                      <Bar dataKey="quantity" fill="#82ca9d" name="Orders" />
+                    </BarChart>
                   </ResponsiveContainer>
                 </div>
 
                 <div className="chart-card">
                   <h3>Monthly Sales</h3>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <BarChart data={salesData.monthlyReport}>
+                  <div className="chart-summary">
+                    <div className="summary-number">{salesData.thisMonthSales}</div>
+                    <div className="summary-label">Total Orders</div>
+                  </div>
+                  <div className="earnings-summary">
+                    <div className="earnings-amount">₱{salesData.thisMonthEarnings}</div>
+                    <div className="earnings-label">Total Earnings</div>
+                  </div>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart 
+                      data={salesData.monthlyReport}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis />
                       <Tooltip content={<CustomTooltip />} />
-                      <Legend />
                       <Bar dataKey="quantity" fill="#ffc658" name="Orders" />
                     </BarChart>
                   </ResponsiveContainer>
@@ -314,134 +548,83 @@ export default function App() {
               </div>
             </div>
 
-            {/* Best Sellers Section */}
+            {/* Best Sellers Section with Add-ons */}
             <div className="section">
               <h2>🏆 Best Sellers</h2>
-              <div className="chart-grid">
-                <div className="chart-card">
-                  <h3>Top 5 Flavors</h3>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <PieChart>
-                      <Pie
-                        data={salesData.bestSellingFlavors}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="quantity"
-                      >
-                        {salesData.bestSellingFlavors.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-
-                <div className="chart-card">
-                  <h3>Popular Sizes</h3>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <BarChart data={salesData.bestSellingSizes}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="quantity" fill="#ff8042" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-
-                <div className="chart-card">
-                  <h3>Cup Types Sold</h3>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <PieChart>
-                      <Pie
-                        data={salesData.bestSellingCups}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="quantity"
-                      >
-                        {salesData.bestSellingCups.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
-
-            {/* Add-ons & Detailed Reports */}
-            <div className="section">
-              <h2>🍧 Add-ons Performance</h2>
-              <div className="chart-grid">
-                <div className="chart-card">
-                  <h3>Top Add-ons</h3>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <BarChart data={salesData.bestSellingAddons} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" />
-                      <YAxis type="category" dataKey="name" width={100} />
-                      <Tooltip />
-                      <Bar dataKey="quantity" fill="#0088FE" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-
-                <div className="chart-card list-card">
-                  <h3>📋 Quick Stats</h3>
-                  <div className="stats-list">
-                    <div className="stat-item">
-                      <strong>Total Orders:</strong> {purchaseHistory.length}
-                    </div>
-                    <div className="stat-item">
-                      <strong>Best Selling Flavor:</strong> 
-                      {salesData.bestSellingFlavors[0]?.name || "N/A"}
-                    </div>
-                    <div className="stat-item">
-                      <strong>Most Popular Size:</strong> 
-                      {salesData.bestSellingSizes[0]?.name || "N/A"}
-                    </div>
-                    <div className="stat-item">
-                      <strong>Top Add-on:</strong> 
-                      {salesData.bestSellingAddons[0]?.name || "N/A"}
-                    </div>
-                    <div className="stat-item">
-                      <strong>Today's Sales:</strong> 
-                      {salesData.dailyReport[salesData.dailyReport.length - 1]?.quantity || 0}
-                    </div>
+              <div className="best-sellers-section">
+                <div className="best-sellers-table">
+                  <h3>Top Flavors</h3>
+                  <div className="table-container">
+                    <table className="analytics-table">
+                      <thead>
+                        <tr>
+                          <th>Rank</th>
+                          <th>Flavor</th>
+                          <th>Total Sold</th>
+                          <th>Percentage</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {salesData.bestSellingFlavors.map((item, index) => {
+                          const totalFlavorOrders = salesData.bestSellingFlavors.reduce((sum, flavor) => sum + flavor.quantity, 0);
+                          const percentage = totalFlavorOrders > 0 ? ((item.quantity / totalFlavorOrders) * 100).toFixed(1) : 0;
+                          
+                          return (
+                            <tr key={item.name}>
+                              <td className="rank-cell">{index + 1}</td>
+                              <td className="name-cell">{item.name}</td>
+                              <td className="quantity-cell">{item.quantity}</td>
+                              <td className="percentage-cell">{percentage}%</td>
+                            </tr>
+                          );
+                        })}
+                        {salesData.bestSellingFlavors.length === 0 && (
+                          <tr>
+                            <td colSpan="4" className="no-results">
+                              No flavor data available
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
 
-                <div className="chart-card list-card">
-                  <h3>📊 Detailed Best Sellers</h3>
-                  <div className="detailed-list">
-                    <div className="list-section">
-                      <h4>Flavors:</h4>
-                      {salesData.bestSellingFlavors.map((item, index) => (
-                        <div key={item.name} className="list-item">
-                          <span>{index + 1}. {item.name}</span>
-                          <span>{item.quantity} sold</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="list-section">
-                      <h4>Add-ons:</h4>
-                      {salesData.bestSellingAddons.map((item, index) => (
-                        <div key={item.name} className="list-item">
-                          <span>{index + 1}. {item.name}</span>
-                          <span>{item.quantity} orders</span>
-                        </div>
-                      ))}
-                    </div>
+                <div className="top-addons-table">
+                  <h3>Top Add-ons</h3>
+                  <div className="table-container">
+                    <table className="analytics-table">
+                      <thead>
+                        <tr>
+                          <th>Rank</th>
+                          <th>Add-on Name</th>
+                          <th>Total Orders</th>
+                          <th>Percentage</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {salesData.bestSellingAddons.map((item, index) => {
+                          const totalAddonOrders = salesData.bestSellingAddons.reduce((sum, addon) => sum + addon.quantity, 0);
+                          const percentage = totalAddonOrders > 0 ? ((item.quantity / totalAddonOrders) * 100).toFixed(1) : 0;
+                          
+                          return (
+                            <tr key={item.name}>
+                              <td className="rank-cell">{index + 1}</td>
+                              <td className="name-cell">{item.name}</td>
+                              <td className="quantity-cell">{item.quantity}</td>
+                              <td className="percentage-cell">{percentage}%</td>
+                            </tr>
+                          );
+                        })}
+                        {salesData.bestSellingAddons.length === 0 && (
+                          <tr>
+                            <td colSpan="4" className="no-results">
+                              No add-on data available
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
@@ -452,56 +635,165 @@ export default function App() {
         {activeTab === "history" && (
           <div className="card">
             <h2>📝 Purchase History</h2>
-            <table className="history-table">
-              <thead>
-                <tr>
-                  <th>Flavor</th>
-                  <th>Size</th>
-                  <th>Add-ons</th>
-                  <th>Qty</th>
-                  <th>Price</th>
-                  <th>Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {purchaseHistory.map((order) => (
-                  <tr key={order.id}>
-                    <td>{order.flavor}</td>
-                    <td>{order.size}</td>
-                    <td>{order.addOns?.join(", ") || "-"}</td>
-                    <td>{order.quantity}</td>
-                    <td>₱{order.price}</td>
-                    <td>{order.createdAt ? order.createdAt.toDate().toLocaleString() : "-"}</td>
+            
+            {/* Search and Filters */}
+            <div className="filters-container">
+              <div className="search-box">
+                <input
+                  type="text"
+                  placeholder="🔍 Search by flavor, add-ons, or notes..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="search-input"
+                />
+              </div>
+
+              <div className="filter-row">
+                <div className="filter-group">
+                  <label>Size:</label>
+                  <select 
+                    value={sizeFilter} 
+                    onChange={(e) => setSizeFilter(e.target.value)}
+                    className="filter-select"
+                  >
+                    <option value="all">All Sizes</option>
+                    {uniqueSizes.map(size => (
+                      <option key={size} value={size}>{size}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="filter-group">
+                  <label>Add-on:</label>
+                  <select 
+                    value={addOnFilter} 
+                    onChange={(e) => setAddOnFilter(e.target.value)}
+                    className="filter-select"
+                  >
+                    <option value="all">All Add-ons</option>
+                    {uniqueAddOns.map(addon => (
+                      <option key={addon} value={addon}>{addon}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="filter-group">
+                  <label>Specific Date:</label>
+                  <select 
+                    value={dateFilter} 
+                    onChange={(e) => setDateFilter(e.target.value)}
+                    className="filter-select"
+                  >
+                    <option value="all">All Dates</option>
+                    {uniqueDates.map(date => (
+                      <option key={date} value={date}>{date}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <button onClick={clearFilters} className="clear-filters-btn">
+                  🗑️ Clear Filters
+                </button>
+              </div>
+
+              <div className="date-range-filter">
+                <h4>Date Range Filter:</h4>
+                <div className="date-inputs">
+                  <div className="date-input-group">
+                    <label>From:</label>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="date-input"
+                    />
+                  </div>
+                  <div className="date-input-group">
+                    <label>To:</label>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="date-input"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="results-info">
+                Showing {filteredHistory.length} of {purchaseHistory.length} orders
+                {filteredHistory.length !== purchaseHistory.length && (
+                  <span className="filter-active"> • Filters Active</span>
+                )}
+              </div>
+            </div>
+
+            <div className="table-container">
+              <table className="history-table">
+                <thead>
+                  <tr>
+                    <th>Flavor</th>
+                    <th>Size</th>
+                    <th>Add-ons</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                    <th>Date & Time</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredHistory.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="no-results">
+                        {purchaseHistory.length === 0 ? 'No orders yet' : 'No orders match your filters'}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredHistory.map((order) => (
+                      <tr key={order.id}>
+                        <td className="flavor-cell">{order.flavor}</td>
+                        <td className="size-cell">{order.size}</td>
+                        <td className="addons-cell">
+                          {order.addOns?.join(", ") || "-"}
+                        </td>
+                        <td className="quantity-cell">{order.quantity}</td>
+                        <td className="price-cell">₱{order.price}</td>
+                        <td className="date-cell">
+                          {order.createdAt ? order.createdAt.toDate().toLocaleString() : "-"}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
         {activeTab === "logs" && (
           <div className="card">
             <h2>📜 Stock Update Logs</h2>
-            <table className="history-table">
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th>New Value</th>
-                  <th>User</th>
-                  <th>Timestamp</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stockLogs.map((log) => (
-                  <tr key={log.id}>
-                    <td>{log.item}</td>
-                    <td>{log.newValue}</td>
-                    <td>{log.user}</td>
-                    <td>{log.timestamp ? log.timestamp.toDate().toLocaleString() : "-"}</td>
+            <div className="table-container">
+              <table className="history-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>New Value</th>
+                    <th>User</th>
+                    <th>Timestamp</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {stockLogs.map((log) => (
+                    <tr key={log.id}>
+                      <td>{log.item}</td>
+                      <td>{log.newValue}</td>
+                      <td>{log.user}</td>
+                      <td>{log.timestamp ? log.timestamp.toDate().toLocaleString() : "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
