@@ -1,0 +1,63 @@
+.inventory-container {
+  padding: 1.5rem;
+}
+
+.inventory-header {
+  font-size: 1.25rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 3px solid #ffce00;
+  padding-bottom: 0.25rem;
+}
+
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.inventory-card {
+  background-color: white;
+  border-left: 4px solid #ffce00;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.inventory-card h3 {
+  font-weight: 600;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.inventory-card table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.inventory-card th {
+  background-color: #ffce00;
+  text-align: left;
+  padding: 6px 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.inventory-card td {
+  padding: 6px 8px;
+  border-top: 1px solid #eee;
+  font-size: 0.9rem;
+}
+
+.no-items {
+  text-align: center;
+  font-style: italic;
+  color: #999;
+  padding: 8px 0;
+}

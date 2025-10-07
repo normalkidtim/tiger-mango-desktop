@@ -1,6 +1,7 @@
 // src/firebase.js
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 // 🔑 Your Firebase config (same as mobile/web)
 const firebaseConfig = {
@@ -17,4 +18,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 // ✅ Export Firestore
+export const auth = getAuth(app);
 export const db = getFirestore(app);
+export { app };

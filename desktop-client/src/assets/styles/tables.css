@@ -1,0 +1,38 @@
+.table-box h4 {
+  margin-bottom: 10px;
+}
+
+.table-box table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-box th {
+  background: #ffca28;
+  padding: 8px;
+  text-align: left;
+  color: #000;
+}
+
+.table-box td {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.table-box .rank {
+  background: #222;
+  color: #fff;
+  text-align: center;
+  width: 36px;
+  font-weight: 700;
+}
+
+.table-box .percent {
+  text-align: right;
+}
+
+.table-box .no-data {
+  text-align: center;
+  color: #999;
+  font-style: italic;
+}

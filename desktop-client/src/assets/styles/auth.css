@@ -1,0 +1,87 @@
+/* Shared styles for Login and Register */
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #f5f5f5;
+}
+
+.auth-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  width: 350px;
+  text-align: center;
+}
+
+.auth-title {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #f8c300;
+  margin-bottom: 0.5rem;
+}
+
+.auth-subtitle {
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.auth-form input {
+  display: block;
+  width: 100%;
+  padding: 0.6rem;
+  margin-bottom: 1rem;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 0.95rem;
+}
+
+.auth-form input:focus {
+  outline: none;
+  border-color: #f8c300;
+  box-shadow: 0 0 4px #f8c300;
+}
+
+.auth-btn {
+  background: #f8c300;
+  color: #333;
+  border: none;
+  padding: 0.7rem;
+  width: 100%;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s ease;
+}
+
+.auth-btn:hover {
+  background: #e4b800;
+}
+
+.auth-error {
+  color: red;
+  margin-bottom: 1rem;
+}
+
+.auth-success {
+  color: green;
+  margin-bottom: 1rem;
+}
+
+.auth-switch {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.auth-switch a {
+  color: #f8c300;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-switch a:hover {
+  text-decoration: underline;
+}
