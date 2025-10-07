@@ -1,35 +1,40 @@
-.inventory-container {
-  padding: 1.5rem;
+.page-container {
+  padding: 16px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .inventory-header {
-  font-size: 1.25rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  border-bottom: 3px solid #ffce00;
-  padding-bottom: 0.25rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.section-underline {
+  height: 4px;
+  background: #ffca28;
+  width: 100%;
+  margin-bottom: 15px;
+  border-radius: 2px;
 }
 
 .inventory-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 12px;
 }
 
 .inventory-card {
-  background-color: white;
-  border-left: 4px solid #ffce00;
+  background: #fff;
+  border-top: 4px solid #ffca28;
   border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  padding: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 
 .inventory-card h3 {
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 1.1rem;
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -42,17 +47,17 @@
 }
 
 .inventory-card th {
-  background-color: #ffce00;
+  background-color: #ffca28;
   text-align: left;
-  padding: 6px 8px;
+  padding: 8px;
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 1rem;
 }
 
 .inventory-card td {
-  padding: 6px 8px;
+  padding: 8px;
   border-top: 1px solid #eee;
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 
 .no-items {

@@ -1,0 +1,71 @@
+/* Sidebar layout */
+.dashboard-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 240px;
+  padding: 16px;
+  background: #f6f6fa;
+  min-height: 100vh;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* Section titles */
+.section-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+/* Inventory Grid */
+.inventory-grid {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.inventory-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  padding: 12px;
+  flex: 1;
+  min-width: 250px;
+}
+
+.inventory-card h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  border-bottom: 2px solid #f8c300;
+  padding-bottom: 4px;
+}
+
+/* Tables */
+.table-container {
+  overflow-x: auto;
+}
+
+.full-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.full-table th {
+  background: #f8c300;
+  text-align: left;
+  padding: 8px;
+}
+
+.full-table td {
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+.no-data {
+  text-align: center;
+  color: #999;
+}

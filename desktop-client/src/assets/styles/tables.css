@@ -1,5 +1,6 @@
 .table-box h4 {
   margin-bottom: 10px;
+  font-size: 1.1rem;
 }
 
 .table-box table {
@@ -12,11 +13,13 @@
   padding: 8px;
   text-align: left;
   color: #000;
+  font-size: 1rem;
 }
 
 .table-box td {
   padding: 8px;
   border-bottom: 1px solid #eee;
+  font-size: 1rem;
 }
 
 .table-box .rank {

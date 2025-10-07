@@ -29,54 +29,49 @@ export default function Inventory() {
     fetchInventory();
   }, []);
 
- const renderTable = (title, data) => {
-  let icon = "📦";
-  if (title === "Cups") icon = "🥤";
-  if (title === "Straws") icon = "🧃";
-  if (title === "Add-ons") icon = "🍧";
+  const renderTable = (title, data) => {
+    let icon = "📦";
+    if (title === "Cups") icon = "🥤";
+    if (title === "Straws") icon = "🧃";
+    if (title === "Add-ons") icon = "🍧";
 
-  return (
-    <div className="inventory-card">
-      <h3>
-        <span>{icon}</span> {title}
-      </h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Stock</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Object.keys(data).length > 0 ? (
-            Object.entries(data).map(([name, stock]) => (
-              <tr key={name}>
-                <td>{name}</td>
-                <td>{stock}</td>
-              </tr>
-            ))
-          ) : (
+    return (
+      <div className="inventory-card">
+        <h3>
+          <span>{icon}</span> {title}
+        </h3>
+        <table>
+          <thead>
             <tr>
-              <td colSpan={2} className="no-items">
-                No items
-              </td>
+              <th>Name</th>
+              <th>Stock</th>
             </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
-};
-
+          </thead>
+          <tbody>
+            {Object.keys(data).length > 0 ? (
+              Object.entries(data).map(([name, stock]) => (
+                <tr key={name}>
+                  <td>{name}</td>
+                  <td>{stock}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={2} className="no-items">
+                  No items
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
 
   return (
-    <div className="inventory-container">
-      <div className="inventory-header">
-        <span role="img" aria-label="box">
-          📦
-        </span>{" "}
-        Inventory Overview
-      </div>
+    <div className="page-container">
+      <h2 className="inventory-header">📦 Inventory Overview</h2>
+      <div className="section-underline"></div>
 
       {loading ? (
         <p>Loading...</p>
