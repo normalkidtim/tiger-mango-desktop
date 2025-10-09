@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
-import "../assets/styles/global.css";
+import { FiShoppingCart, FiCalendar } from "react-icons/fi";
 
 export default function PurchaseHistory() {
   const [orders, setOrders] = useState([]);
@@ -17,7 +17,7 @@ export default function PurchaseHistory() {
   }, []);
 
   const filteredOrders = useMemo(() => {
-    if (!startDate || !endDate) return orders;
+    if (!startDate && !endDate) return orders;
     const start = new Date(startDate + "T00:00:00");
     const end = new Date(endDate + "T23:59:59.999");
     return orders.filter((o) => {
@@ -27,15 +27,25 @@ export default function PurchaseHistory() {
   }, [orders, startDate, endDate]);
 
   return (
-    <div className="page-container">
-      <h2 className="sales-header">🧾 Purchase History</h2>
-      <div className="section-underline"></div>
+    <div>
+      <div className="page-header">
+        <FiShoppingCart />
+        <h2>Purchase History</h2>
+      </div>
+      <div className="page-header-underline"></div>
 
-      <div className="history-filters">
-        <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-        <span>to</span>
-        <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-        <button className="btn small outline" onClick={() => { setStartDate(""); setEndDate(""); }}>
+      {/* ✅ Implemented the new filter bar */}
+      <div className="filter-bar">
+        <div className="filter-group">
+          <FiCalendar />
+          <label>From:</label>
+          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+        </div>
+        <div className="filter-group">
+          <label>To:</label>
+          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+        </div>
+        <button className="btn" onClick={() => { setStartDate(""); setEndDate(""); }} style={{ backgroundColor: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
           Clear
         </button>
       </div>
@@ -55,17 +65,16 @@ export default function PurchaseHistory() {
           <tbody>
             {filteredOrders.length > 0 ? (
               filteredOrders
-                .sort((a, b) => b.createdAt?.seconds - a.createdAt?.seconds)
+                .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
                 .map((o) => {
                   const d = o.createdAt?.toDate ? o.createdAt.toDate() : new Date(o.createdAt);
-                  const dateStr = d.toLocaleString();
                   const addons = Array.isArray(o.addOns) ? o.addOns.join(", ") : "";
                   const total = (o.price || 0) * (o.quantity || 1);
                   return (
                     <tr key={o.id}>
-                      <td>{dateStr}</td>
+                      <td>{d.toLocaleString()}</td>
                       <td>{o.flavor}</td>
-                      <td>{addons}</td>
+                      <td>{addons || '-'}</td>
                       <td>{o.size}</td>
                       <td>{o.quantity}</td>
                       <td>{total.toLocaleString()}</td>
@@ -74,7 +83,7 @@ export default function PurchaseHistory() {
                 })
             ) : (
               <tr>
-                <td colSpan="6" className="no-data">No orders</td>
+                <td colSpan="6" className="no-data">No orders found for the selected criteria</td>
               </tr>
             )}
           </tbody>

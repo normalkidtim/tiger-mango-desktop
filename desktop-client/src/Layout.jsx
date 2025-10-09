@@ -2,6 +2,10 @@
 import React from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
+import {
+  FiGrid, FiShoppingCart, FiBarChart2, FiFileText,
+  FiUsers, FiUserPlus, FiLogOut
+} from "react-icons/fi";
 
 export default function Layout() {
   const { logout, currentUser } = useAuth();
@@ -21,48 +25,33 @@ export default function Layout() {
         </div>
 
         <nav className="sidebar-nav">
-          <NavLink
-            to="/inventory"
-            className={({ isActive }) =>
-              isActive ? "sidebar-link active" : "sidebar-link"
-            }
-          >
-            Inventory
+          <NavLink to="/inventory" className="sidebar-link">
+            <FiGrid /> Inventory
           </NavLink>
-
-          <NavLink
-            to="/purchase-history"
-            className={({ isActive }) =>
-              isActive ? "sidebar-link active" : "sidebar-link"
-            }
-          >
-            Purchase History
+          <NavLink to="/purchase-history" className="sidebar-link">
+            <FiShoppingCart /> Purchase History
           </NavLink>
-
-          <NavLink
-            to="/sales-analytics"
-            className={({ isActive }) =>
-              isActive ? "sidebar-link active" : "sidebar-link"
-            }
-          >
-            Sales Analytics
+          <NavLink to="/sales-analytics" className="sidebar-link">
+            <FiBarChart2 /> Sales Analytics
           </NavLink>
-
-          <NavLink
-            to="/stock-logs"
-            className={({ isActive }) =>
-              isActive ? "sidebar-link active" : "sidebar-link"
-            }
-          >
-            Stock Logs
+          <NavLink to="/stock-logs" className="sidebar-link">
+            <FiFileText /> Stock Logs
+          </NavLink>
+          <NavLink to="/user-management" className="sidebar-link">
+            <FiUsers /> User Management
+          </NavLink>
+          <NavLink to="/create-user" className="sidebar-link">
+            <FiUserPlus /> Create User
           </NavLink>
         </nav>
 
         <div className="sidebar-bottom">
           {currentUser && (
-            <p className="sidebar-user">{currentUser.email}</p>
+            // ✅ Changed this line to show the user's name, with email as a fallback
+            <p className="sidebar-user">{currentUser.displayName || currentUser.email}</p>
           )}
           <button onClick={handleLogout} className="logout-btn">
+            <FiLogOut style={{ marginRight: '5px' }} />
             Logout
           </button>
         </div>
