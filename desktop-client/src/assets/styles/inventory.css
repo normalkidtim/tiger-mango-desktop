@@ -1,68 +1,84 @@
-.page-container {
-  padding: 16px;
-  width: 100%;
-  box-sizing: border-box;
-}
+/* src/assets/styles/inventory.css */
 
-.inventory-header {
-  font-size: 1.75rem;
-  font-weight: 700;
-  margin-bottom: 5px;
-}
-
-.section-underline {
-  height: 4px;
-  background: #ffca28;
-  width: 100%;
-  margin-bottom: 15px;
-  border-radius: 2px;
-}
-
-.inventory-grid {
+/* ✅ Changed to a 3-column grid layout */
+.inventory-sections {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
 }
 
 .inventory-card {
-  background: #fff;
-  border-top: 4px solid #ffca28;
+  background: var(--background-light);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
 }
 
-.inventory-card h3 {
-  font-weight: 600;
-  font-size: 1.1rem;
+.inventory-card-header {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  margin-bottom: 0.75rem;
-}
-
-.inventory-card table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.inventory-card th {
-  background-color: #ffca28;
-  text-align: left;
-  padding: 8px;
+  gap: 10px;
+  padding: 16px 20px;
+  font-size: 1.2rem;
   font-weight: 600;
-  font-size: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--gold-accent);
 }
 
-.inventory-card td {
+/* ✅ New container for the list of items */
+.inventory-item-list {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ✅ New style for each item row (replacing <tr>) */
+.inventory-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.inventory-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.inventory-item-name {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+/* ✅ New style for the number display box */
+.inventory-item-stock input {
+  width: 80px;
   padding: 8px;
-  border-top: 1px solid #eee;
   font-size: 1rem;
+  font-family: var(--font-main);
+  text-align: center;
+  font-weight: 600;
+  border: 1px solid var(--border-color);
+  background-color: var(--background-dark);
+  color: var(--text-primary);
+  border-radius: 6px;
+  outline: none;
+  -moz-appearance: textfield; /* Hides arrows in Firefox */
 }
 
-.no-items {
+/* Hides arrows in Chrome, Safari, Edge */
+.inventory-item-stock input::-webkit-outer-spin-button,
+.inventory-item-stock input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.no-items-message {
+  padding: 20px;
   text-align: center;
+  color: var(--text-secondary);
   font-style: italic;
-  color: #999;
-  padding: 8px 0;
 }

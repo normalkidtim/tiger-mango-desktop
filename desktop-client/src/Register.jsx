@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { getAuth, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { app } from "./firebase";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { auth } from "./firebase"; // ✅ CORRECTED: Import auth directly
 import "./assets/styles/auth.css";
 
 export default function Register() {
@@ -24,7 +24,7 @@ export default function Register() {
     }
 
     try {
-      const auth = getAuth(app);
+      // ✅ CORRECTED: Use the imported auth object directly
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
       if (displayName.trim() !== "") {

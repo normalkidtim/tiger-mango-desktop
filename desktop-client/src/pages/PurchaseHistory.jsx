@@ -1,17 +1,19 @@
-// src/pages/PurchaseHistory.jsx
 import React, { useEffect, useState, useMemo } from "react";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 import { db } from "../firebase";
-import "../assets/styles/global.css";
+import { FiShoppingCart, FiCalendar } from "react-icons/fi";
 
 export default function PurchaseHistory() {
   const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, "orders"), (snap) => {
-      setOrders(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+    const unsub = onSnapshot(q, (snap) => {
+      setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      setLoading(false);
     });
     return () => unsub();
   }, []);
@@ -26,16 +28,26 @@ export default function PurchaseHistory() {
     });
   }, [orders, startDate, endDate]);
 
-  return (
-    <div className="page-container">
-      <h2 className="sales-header">🧾 Purchase History</h2>
-      <div className="section-underline"></div>
 
-      <div className="history-filters">
-        <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-        <span>to</span>
-        <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-        <button className="btn small outline" onClick={() => { setStartDate(""); setEndDate(""); }}>
+  return (
+    <div>
+      <div className="page-header">
+        <FiShoppingCart />
+        <h2>Purchase History</h2>
+      </div>
+      <div className="page-header-underline"></div>
+
+      <div className="filter-bar">
+        <div className="filter-group">
+          <FiCalendar />
+          <label>From:</label>
+          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+        </div>
+        <div className="filter-group">
+          <label>To:</label>
+          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+        </div>
+        <button className="btn btn-outline" onClick={() => { setStartDate(""); setEndDate(""); }}>
           Clear
         </button>
       </div>
@@ -45,7 +57,7 @@ export default function PurchaseHistory() {
           <thead>
             <tr>
               <th>Date</th>
-              <th>Flavor</th>
+              <th>Item</th>
               <th>Add-ons</th>
               <th>Size</th>
               <th>Qty</th>
@@ -53,30 +65,27 @@ export default function PurchaseHistory() {
             </tr>
           </thead>
           <tbody>
-            {filteredOrders.length > 0 ? (
-              filteredOrders
-                .sort((a, b) => b.createdAt?.seconds - a.createdAt?.seconds)
-                .map((o) => {
-                  const d = o.createdAt?.toDate ? o.createdAt.toDate() : new Date(o.createdAt);
-                  const dateStr = d.toLocaleString();
-                  const addons = Array.isArray(o.addOns) ? o.addOns.join(", ") : "";
-                  const total = (o.price || 0) * (o.quantity || 1);
+            {loading ? (
+              <tr><td colSpan="6" className="no-data">Loading...</td></tr>
+            ) : filteredOrders.flatMap((order) => {
+                // This logic now handles BOTH old (single item) and new (multi-item) order formats
+                const itemsToRender = order.items ? order.items : [order];
+                return itemsToRender.map((item, index) => {
+                  const d = order.createdAt?.toDate ? order.createdAt.toDate() : new Date();
+                  const addons = Array.isArray(item.addOns) ? item.addOns.join(", ") : "";
+                  const total = item.price || 0;
                   return (
-                    <tr key={o.id}>
-                      <td>{dateStr}</td>
-                      <td>{o.flavor}</td>
-                      <td>{addons}</td>
-                      <td>{o.size}</td>
-                      <td>{o.quantity}</td>
+                    <tr key={`${order.id}-${index || 0}`}>
+                      <td>{index === 0 ? d.toLocaleString('en-US', { timeZone: 'Asia/Manila' }) : ""}</td>
+                      <td>{item.flavor}</td>
+                      <td>{addons || '-'}</td>
+                      <td>{item.size}</td>
+                      <td>{item.quantity}</td>
                       <td>{total.toLocaleString()}</td>
                     </tr>
                   );
-                })
-            ) : (
-              <tr>
-                <td colSpan="6" className="no-data">No orders</td>
-              </tr>
-            )}
+                });
+            })}
           </tbody>
         </table>
       </div>

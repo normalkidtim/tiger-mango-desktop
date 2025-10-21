@@ -10,6 +10,7 @@ import "./assets/styles/sidebar.css";
 import "./assets/styles/tables.css";
 import "./assets/styles/inventory.css";
 import "./assets/styles/sales-analytics.css";
+import "./assets/styles/filters.css"; // ✅ Add this new line
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

@@ -1,0 +1,112 @@
+/* src/assets/styles/create-user.css */
+
+.create-user-card {
+  /* ✅ Center the card horizontally and add vertical space */
+  margin: auto;
+  max-width: 750px; /* Give the form a comfortable, focused width */
+
+  background: var(--background-light);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  padding: 35px 40px;
+  box-sizing: border-box;
+}
+
+.create-user-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.create-user-header h2 {
+  font-size: 1.75rem;
+  margin-bottom: 8px;
+}
+
+.create-user-header p {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.create-user-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px; /* Increased gap for better spacing */
+}
+
+/* ✅ Style for the new form group (label + input) */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.name-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.create-user-form input,
+.create-user-form select {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 1rem;
+  font-family: var(--font-main);
+  border: 1px solid var(--border-color);
+  background-color: var(--background-dark);
+  color: var(--text-primary);
+  border-radius: 6px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.create-user-form input:focus,
+.create-user-form select:focus {
+  border-color: var(--gold-accent);
+  box-shadow: 0 0 0 3px rgba(255, 202, 40, 0.2);
+}
+
+.create-user-button {
+  background-color: var(--gold-accent);
+  color: #000;
+  font-weight: 600;
+  font-size: 1.1rem; /* Slightly larger for emphasis */
+  padding: 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: all 0.2s ease;
+}
+
+.create-user-button:hover {
+  background-color: var(--gold-accent-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.auth-error,
+.auth-success {
+  text-align: center;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.auth-error {
+  color: #ff8a80;
+  background-color: rgba(255, 138, 128, 0.1);
+}
+
+.auth-success {
+  color: #b9f6ca;
+  background-color: rgba(185, 246, 202, 0.1);
+}

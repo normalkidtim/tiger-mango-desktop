@@ -1,129 +1,110 @@
 // src/Dashboard.jsx
 import React, { useEffect, useState } from "react";
-import './App.css'; // ensure styling is loaded (this restores the design)
+import './App.css';
 import { db } from './firebase';
 import {
   collection,
   onSnapshot,
   query,
   orderBy,
-  getDocs,
+  doc, // ✅ ADD THIS
 } from "firebase/firestore";
 import { useAuth } from './AuthContext';
 import Register from './Register';
 import Login from './Login';
 import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  Cell
+  BarChart, Bar, LineChart, Line, PieChart, Pie, XAxis, YAxis,
+  CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell
 } from "recharts";
-
-/**
- * Restored Dashboard — this is the original App UI moved into a Dashboard component.
- * It uses your App.css classes so the visuals match what you originally sent.
- */
 
 export default function Dashboard() {
   const { currentUser, logout, getUsers, updateUser } = useAuth();
-
-  // Basic UI state
-  const [activeTab, setActiveTab] = useState('inventory'); // inventory | history | analytics | admin
+  const [activeTab, setActiveTab] = useState('inventory');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
-  // Inventory & analytics state
   const [cups, setCups] = useState([]);
   const [straws, setStraws] = useState([]);
   const [addons, setAddons] = useState([]);
   const [purchaseHistory, setPurchaseHistory] = useState([]);
   const [filteredHistory, setFilteredHistory] = useState([]);
   const [stockLogs, setStockLogs] = useState([]);
-
-  // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [sizeFilter, setSizeFilter] = useState('all');
   const [addOnFilter, setAddOnFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-
-  // UI helpers
   const [exportNotification, setExportNotification] = useState(null);
   const [appVersion, setAppVersion] = useState('1.0.0');
   const [userRole, setUserRole] = useState(currentUser?.role || 'employee');
-
-  // Colors for charts
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
   useEffect(() => {
-    // window size responsive
     function handleResize() {
       setIsMobile(window.innerWidth < 768);
     }
     window.addEventListener('resize', handleResize);
 
-    // subscribe to Firestore collections if available
+    // ✅ REPLACED DATA FETCHING LOGIC
     let unsubOrders = () => {};
     let unsubLogs = () => {};
     let unsubCups = () => {};
     let unsubStraws = () => {};
+    let unsubAddons = () => {};
 
     try {
-      const cupsCol = collection(db, "cups");
-      const qCups = query(cupsCol, orderBy("name"));
-      unsubCups = onSnapshot(qCups, (snap) => {
-        const arr = [];
-        snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
-        setCups(arr);
-      });
+        // --- Correct Inventory Fetching ---
+        const processInventoryDoc = (docSnap) => {
+            if (!docSnap.exists()) return [];
+            const data = docSnap.data();
+            return Object.entries(data).map(([key, value]) => ({
+                id: key,
+                name: key.charAt(0).toUpperCase() + key.slice(1).replace('-', ' '),
+                quantity: value
+            }));
+        };
 
-      const strawsCol = collection(db, "straws");
-      const qStraws = query(strawsCol, orderBy("name"));
-      unsubStraws = onSnapshot(qStraws, (snap) => {
-        const arr = [];
-        snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
-        setStraws(arr);
-      });
+        unsubCups = onSnapshot(doc(db, "inventory", "cups"), (docSnap) => {
+            setCups(processInventoryDoc(docSnap));
+        });
+        unsubStraws = onSnapshot(doc(db, "inventory", "straw"), (docSnap) => {
+            setStraws(processInventoryDoc(docSnap));
+        });
+        unsubAddons = onSnapshot(doc(db, "inventory", "add-ons"), (docSnap) => {
+            setAddons(processInventoryDoc(docSnap));
+        });
 
-      const ordersCol = collection(db, "orders");
-      const qOrders = query(ordersCol, orderBy("createdAt", "desc"));
-      unsubOrders = onSnapshot(qOrders, (snap) => {
-        const arr = [];
-        snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
-        setPurchaseHistory(arr);
-        setFilteredHistory(arr);
-      });
+        // --- Existing Order and Log Fetching ---
+        const ordersCol = collection(db, "orders");
+        const qOrders = query(ordersCol, orderBy("createdAt", "desc"));
+        unsubOrders = onSnapshot(qOrders, (snap) => {
+            const arr = [];
+            snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
+            setPurchaseHistory(arr);
+            setFilteredHistory(arr);
+        });
 
-      const logsCol = collection(db, "stock-logs");
-      const qLogs = query(logsCol, orderBy("timestamp", "desc"));
-      unsubLogs = onSnapshot(qLogs, (snap) => {
-        const arr = [];
-        snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
-        setStockLogs(arr);
-      });
+        const logsCol = collection(db, "stock-logs");
+        const qLogs = query(logsCol, orderBy("timestamp", "desc"));
+        unsubLogs = onSnapshot(qLogs, (snap) => {
+            const arr = [];
+            snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
+            setStockLogs(arr);
+        });
+
     } catch (err) {
-      // Firestore may be unavailable in browser fallback — we swallow errors here
-      console.warn('Firestore subscribe error (may be running in web fallback):', err.message);
+        console.warn('Firestore subscribe error:', err.message);
     }
 
     return () => {
-      window.removeEventListener('resize', handleResize);
-      try { unsubOrders(); } catch {}
-      try { unsubLogs(); } catch {}
-      try { unsubCups(); } catch {}
-      try { unsubStraws(); } catch {}
+        window.removeEventListener('resize', handleResize);
+        unsubOrders();
+        unsubLogs();
+        unsubCups();
+        unsubStraws();
+        unsubAddons();
     };
-  }, []);
+}, []);
 
   // Filtering logic
   useEffect(() => {

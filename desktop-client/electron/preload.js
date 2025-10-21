@@ -1,4 +1,3 @@
-
 // electron/preload.js
 const { contextBridge, ipcRenderer } = require('electron');
 
@@ -7,4 +6,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   authLogin: (email, password) => ipcRenderer.invoke('auth-login', { email, password }),
   authSignup: (email, password, firstName, lastName) =>
     ipcRenderer.invoke('auth-signup', { email, password, firstName, lastName }),
+
+  // ✅ ADDED this line
+  deleteFirebaseUser: (uid) => ipcRenderer.invoke('delete-firebase-user', uid)
 });

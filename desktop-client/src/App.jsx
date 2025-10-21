@@ -8,7 +8,8 @@ import Inventory from "./pages/Inventory.jsx";
 import PurchaseHistory from "./pages/PurchaseHistory.jsx";
 import SalesAnalytics from "./pages/SalesAnalytics.jsx";
 import StockLogs from "./pages/StockLogs.jsx";
-
+import UserManagement from "./pages/UserManagement.jsx";
+import CreateUser from "./pages/CreateUser.jsx";
 import Login from "./Login.jsx";
 import Register from "./Register.jsx";
 import { useAuth } from "./AuthContext.jsx";
@@ -40,6 +41,9 @@ export default function App() {
         <Route path="/purchase-history" element={<PurchaseHistory />} />
         <Route path="/sales-analytics" element={<SalesAnalytics />} />
         <Route path="/stock-logs" element={<StockLogs />} />
+        <Route path="/user-management" element={<UserManagement />} />
+        <Route path="/create-user" element={<CreateUser />} />
+
       </Route>
 
       {/* Default redirect */}

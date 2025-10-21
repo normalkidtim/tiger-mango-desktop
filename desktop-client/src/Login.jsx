@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
-import { app } from "./firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "./firebase"; // ✅ CORRECTED: Import auth directly
 import "./assets/styles/auth.css";
 
 export default function Login() {
@@ -17,7 +17,7 @@ export default function Login() {
     setWelcome("");
 
     try {
-      const auth = getAuth(app);
+      // ✅ CORRECTED: Use the imported auth object directly
       const cred = await signInWithEmailAndPassword(auth, email, password);
 
       if (window.electronAPI?.authLogin) {

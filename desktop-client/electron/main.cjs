@@ -1,24 +1,26 @@
 // electron/main.cjs
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
-
-// ✅ Firebase setup
 const { initializeApp } = require('firebase/app');
-const {
-  getAuth,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-} = require('firebase/auth');
+const { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } = require('firebase/auth');
+
+// ✅ --- ADDED: Firebase Admin Setup ---
+const admin = require('firebase-admin');
+const serviceAccount = require('./serviceAccountKey.json');
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+// --- End of Admin Setup ---
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAMqdQMw5xNo_JyVP453x13_gGcxvPZdnc",
-  authDomain: "tiger-mango.firebaseapp.com",
-  projectId: "tiger-mango",
-  storageBucket: "tiger-mango.firebasestorage.app",
-  messagingSenderId: "468721196593",
-  appId: "1:468721196593:web:7fb67ce445f4fe639fbf10",
+    apiKey: "AIzaSyAMqdQMw5xNo_JyVP453x13_gGcxvPZdnc",
+    authDomain: "tiger-mango.firebaseapp.com",
+    projectId: "tiger-mango",
+    storageBucket: "tiger-mango.firebasestorage.app",
+    messagingSenderId: "468721196593",
+    appId: "1:468721196593:web:7fb67ce445f4fe639fbf10",
 };
-
 initializeApp(firebaseConfig);
 const auth = getAuth();
 
@@ -46,41 +48,36 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 
-// ✅ Auth: Login
+// Auth: Login
 ipcMain.handle('auth-login', async (event, { email, password }) => {
   try {
     const cred = await signInWithEmailAndPassword(auth, email, password);
     const user = cred.user;
-
-    return {
-      success: true,
-      user: {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-      },
-    };
+    return { success: true, user: { uid: user.uid, email: user.email, displayName: user.displayName } };
   } catch (err) {
     return { success: false, error: err.message };
   }
 });
 
-// ✅ Auth: Signup
+// Auth: Signup
 ipcMain.handle('auth-signup', async (event, { email, password }) => {
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     const user = cred.user;
-
-    return {
-      success: true,
-      user: {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-      },
-    };
+    return { success: true, user: { uid: user.uid, email: user.email, displayName: user.displayName } };
   } catch (err) {
     return { success: false, error: err.message };
+  }
+});
+
+// ✅ --- ADDED: Handle User Deletion from Authentication ---
+ipcMain.handle('delete-firebase-user', async (event, uid) => {
+  try {
+    await admin.auth().deleteUser(uid);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete user from Firebase Auth:", error);
+    return { success: false, error: error.message };
   }
 });
 
