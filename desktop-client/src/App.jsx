@@ -1,55 +1,56 @@
-// src/App.jsx
-import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
-import Layout from "./Layout.jsx";
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './AuthContext';
 
-// ✅ Correct imports from the pages folder
-import Inventory from "./pages/Inventory.jsx";
-import PurchaseHistory from "./pages/PurchaseHistory.jsx";
-import SalesAnalytics from "./pages/SalesAnalytics.jsx";
-import StockLogs from "./pages/StockLogs.jsx";
-import UserManagement from "./pages/UserManagement.jsx";
-import CreateUser from "./pages/CreateUser.jsx";
-import Orders from "./pages/Orders.jsx"; // ✅ --- (1. IMPORT YOUR NEW PAGE) ---
-import Login from "./Login.jsx";
-import Register from "./Register.jsx";
-import { useAuth } from "./AuthContext.jsx";
+import Layout from './Layout';
+import Login from './Login';
+import Register from './Register';
 
+import POS from './pages/POS';
+import Orders from './pages/Orders';
+import Inventory from './pages/Inventory';
+
+// ✅ --- (NEW) Import the new pages ---
+import SalesAnalytics from './pages/SalesAnalytics';
+import UserManagement from './pages/UserManagement';
+import CreateUser from './pages/CreateUser';
+
+
+// A protected route component
 function ProtectedRoute({ children }) {
   const { currentUser } = useAuth();
-  if (!currentUser) {
-    return <Navigate to="/login" replace />;
-  }
-  return children;
+  return currentUser ? children : <Navigate to="/login" replace />;
 }
 
-export default function App() {
+function App() {
   return (
-    <Routes>
-      {/* Public routes */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+    <AuthProvider>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        
+        <Route 
+          path="/" 
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<POS />} /> 
+          <Route path="orders" element={<Orders />} />
+          <Route path="inventory" element={<Inventory />} />
 
-      {/* Protected routes inside Layout */}
-      <Route
-        element={
-          <ProtectedRoute>
-            <Layout />
-          </ProtectedRoute>
-        }
-      >
-        <Route path="/inventory" element={<Inventory />} />
-        <Route path="/orders" element={<Orders />} /> {/* ✅ --- (2. ADD THIS RULE) --- */}
-        <Route path="/purchase-history" element={<PurchaseHistory />} />
-        <Route path="/sales-analytics" element={<SalesAnalytics />} />
-        <Route path="/stock-logs" element={<StockLogs />} />
-        <Route path="/user-management" element={<UserManagement />} />
-        <Route path="/create-user" element={<CreateUser />} />
-
-      </Route>
-
-      {/* Default redirect */}
-      <Route path="*" element={<Navigate to="/inventory" replace />} />
-    </Routes>
+          {/* ✅ --- (NEW) Add new routes here --- */}
+          <Route path="sales" element={<SalesAnalytics />} />
+          <Route path="users" element={<UserManagement />} />
+          <Route path="users/create" element={<CreateUser />} />
+          
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
+      </Routes>
+    </AuthProvider>
   );
 }
+
+export default App;

@@ -1,93 +1,72 @@
 /* src/assets/styles/tables.css */
+
+/* This is the white card container for the table */
 .table-box {
-  background-color: var(--background-light);
+  background-color: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 10px;
-  overflow-x: auto;
+  overflow: hidden; /* Ensures rounded corners on the table */
+  margin-bottom: 24px;
 }
 
-.table-box h4 {
-  padding: 10px 15px;
+.table-box h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
   margin: 0;
-  font-size: 1.1rem;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-color);
 }
 
-.table-box table {
+table {
   width: 100%;
   border-collapse: collapse;
-  /* Let the browser decide column widths by default */
-  table-layout: auto; 
 }
 
-.table-box th {
-  background: rgba(255, 202, 40, 0.1); /* Faint gold */
-  color: var(--gold-accent);
-  padding: 12px 15px;
+table thead tr {
+  background-color: var(--bg-main); /* Light gray header */
+}
+
+table th {
+  padding: 16px 24px;
   text-align: left;
-  font-size: 0.9rem;
+  font-size: 13px;
   font-weight: 600;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.table-box td {
-  padding: 12px 15px;
+table tbody tr {
   border-bottom: 1px solid var(--border-color);
-  font-size: 1rem;
-  color: var(--text-secondary);
-  /* ✅ Allow text to wrap if it's too long */
-  white-space: normal;
-  word-break: break-word;
 }
-
-.table-box tbody tr:last-child td {
+table tbody tr:last-child {
   border-bottom: none;
 }
 
-.table-box tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.03);
+table td {
+  padding: 16px 24px;
+  font-size: 15px;
+  color: var(--text-primary);
+  vertical-align: top;
 }
 
-.table-box .rank {
-  display: inline-block;
-  background: var(--gold-accent);
-  color: #000;
+/* For empty table states */
+.no-data {
   text-align: center;
-  width: 24px;
-  padding: 2px 4px;
-  font-weight: 700;
-  border-radius: 4px;
-}
-
-.table-box .no-data {
-  text-align: center;
-  padding: 40px;
   color: var(--text-secondary);
-  font-style: italic;
-  white-space: normal;
+  padding: 40px;
+  font-size: 16px;
 }
 
-
-/* ✅ --- STYLES FOR BEST SELLERS TABLE ONLY --- */
-
-.best-sellers-table {
-  table-layout: fixed; /* Force equal columns for this table */
+/* For item lists inside a table cell */
+table td ul {
+  margin: 0;
+  padding-left: 20px;
 }
-
-.best-sellers-table td {
-  white-space: nowrap; /* Prevent wrapping in this table */
-  overflow: hidden;
-  text-overflow: ellipsis; /* Use '...' for overflow in this table */
+table td li {
+  margin-bottom: 6px;
 }
-
-.best-sellers-table th:first-child,
-.best-sellers-table td:first-child {
-  width: 60px; 
-}
-
-.best-sellers-table th:last-child,
-.best-sellers-table td:last-child {
-  width: 65px;
-  text-align: right;
+table td li:last-child {
+  margin-bottom: 0;
 }

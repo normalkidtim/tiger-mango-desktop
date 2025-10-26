@@ -4,35 +4,70 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  align-items: flex-start;
 }
 
 .order-button {
-  padding: 8px 12px;
-  border: none;
-  border-radius: 6px;
-  color: #FFFFFF;
+  padding: 10px 16px;
+  font-size: 14px;
   font-weight: 600;
-  font-size: 0.9rem;
+  border: none;
+  border-radius: 5px;
   cursor: pointer;
-  transition: opacity 0.2s ease;
-  width: 100px; /* Make buttons same width */
-  text-align: center;
+  transition: all 0.2s ease;
 }
 
-.order-button:hover {
-  opacity: 0.8;
+/* --- New Theme Buttons --- */
+
+.button-complete {
+  background-color: var(--accent-green);
+  color: white;
+}
+.button-complete:hover {
+  background-color: #006644;
 }
 
-.order-button.button-complete {
-  background-color: #4CAF50; /* Green */
+.button-cancel {
+  background-color: var(--text-secondary);
+  color: white;
+}
+.button-cancel:hover {
+  background-color: #42526e;
 }
 
-.order-button.button-cancel {
-  background-color: #f44336; /* Red */
+.button-void {
+  background-color: var(--accent-red);
+  color: white;
+}
+.button-void:hover {
+  background-color: #bf2600;
 }
 
-.order-button.button-void {
-  background-color: #f59e0b; /* Amber/Yellow */
-  color: #111827; /* Dark text for yellow */
+/* ✅ --- (MODIFIED) Styles for the order item list --- */
+.order-item-category {
+  display: block;
+  font-size: 16px; /* <-- Made it bigger */
+  font-weight: 600;
+  color: var(--accent-blue); /* <-- Kept the blue color */
+  margin-bottom: 2px; /* <-- Added space below */
+}
+
+.order-item-name {
+  display: block;
+  font-size: 14px; /* <-- This is the base size */
+  color: var(--text-primary);
+  margin-bottom: 4px; /* <-- Added space below */
+}
+
+.order-item-details {
+  display: block;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* Add spacing to list items in tables */
+table td li {
+  margin-bottom: 12px; /* <-- Increased margin a bit */
+}
+table td li:last-child {
+  margin-bottom: 0;
 }

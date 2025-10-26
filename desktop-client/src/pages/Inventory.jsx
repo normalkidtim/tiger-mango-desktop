@@ -4,81 +4,74 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import '../assets/styles/inventory.css';
 import '../assets/styles/tables.css';
 
-const Inventory = () => {
-  const [cups, setCups] = useState(null);
-  const [straws, setStraws] = useState(null);
-  const [addOns, setAddOns] = useState(null);
-  const [loading, setLoading] = useState(true);
+// ✅ --- (THIS IS THE FIX) ---
+// We no longer need to format the name. We just return the key as is.
+// Firebase already has "Coffee Jelly", so we'll display that directly.
+const formatItemName = (key) => {
+  return key;
+};
+
+// This component listens to a single inventory document
+const InventoryTable = ({ docPath, title, unit }) => {
+  const [data, setData] = useState(null);
 
   useEffect(() => {
-    setLoading(true);
-    const docRefs = [
-      doc(db, 'inventory', 'cups'),
-      doc(db, 'inventory', 'straw'),
-      doc(db, 'inventory', 'add-ons'),
-    ];
-
-    const unsubscribes = docRefs.map((docRef, index) => {
-      return onSnapshot(docRef, (doc) => {
-        if (doc.exists()) {
-          const data = doc.data();
-          if (index === 0) setCups(data);
-          if (index === 1) setStraws(data);
-          if (index === 2) setAddOns(data);
-        } else {
-          console.warn(`Document not found at path: ${docRef.path}`);
-        }
-      });
+    const docRef = doc(db, 'inventory', docPath);
+    const unsubscribe = onSnapshot(docRef, (doc) => {
+      if (doc.exists()) {
+        setData(doc.data());
+      } else {
+        console.warn(`Document not found: inventory/${docPath}`);
+        setData({});
+      }
     });
+    return () => unsubscribe();
+  }, [docPath]);
 
-    setLoading(false);
-    
-    return () => unsubscribes.forEach(unsub => unsub());
-  }, []);
-
-  // ✅ --- (NEW) Helper function to format the item names ---
-  const formatItemName = (key) => {
-    return key
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
-
-  const renderTable = (title, data) => {
-    if (!data) return <p>Loading {title}...</p>;
-    return (
-      <div className="table-box">
-        <h3>{title}</h3>
-        <table>
-          <thead>
+  return (
+    <div className="table-box inventory-table-box">
+      <h3>{title}</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Current Stock ({unit})</th>
+          </tr>
+        </thead>
+        <tbody>
+          {!data && (
             <tr>
-              <th>Item</th>
-              <th>Current Stock</th>
+              <td colSpan="2" className="no-data">Loading...</td>
             </tr>
-          </thead>
-          <tbody>
-            {Object.entries(data).map(([key, value]) => (
-              <tr key={key}>
-                {/* ✅ --- (MODIFIED) Use the helper function here --- */}
-                <td>{formatItemName(key)}</td>
-                <td>{value}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    );
-  };
+          )}
+          {data && Object.keys(data).length === 0 && (
+            <tr>
+              <td colSpan="2" className="no-data">Document 'inventory/{docPath}' not found.</td>
+            </tr>
+          )}
+          {data && Object.entries(data).map(([key, value]) => (
+            <tr key={key}>
+              <td>{formatItemName(key)}</td>
+              <td>{value.toLocaleString()}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
 
-  if (loading) return <div>Loading Inventory...</div>;
-
+// Main Inventory Page
+const Inventory = () => {
   return (
     <div className="page-container">
       <h2>Inventory Management</h2>
-      <div style={{ display: 'flex', flexDirection: 'row', gap: '20px' }}>
-        {renderTable('Cups', cups)}
-        {renderTable('Straws', straws)}
-        {renderTable('Add-ons', addOns)}
+      <p>This is a read-only view of current stock levels.</p>
+
+      <div className="inventory-grid">
+        <InventoryTable docPath="cups" title="Cups" unit="pcs" />
+        <InventoryTable docPath="straws" title="Straws" unit="pcs" />
+        <InventoryTable docPath="toppings" title="Toppings" unit="servings" />
       </div>
     </div>
   );

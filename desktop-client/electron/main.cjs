@@ -6,10 +6,10 @@ const { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } = 
 
 // ✅ --- ADDED: Firebase Admin Setup ---
 const admin = require('firebase-admin');
-const serviceAccount = require('./serviceAccountKey.json');
+//const serviceAccount = require('./serviceAccountKey.json');
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+ //credential: admin.credential.cert(serviceAccount)
 });
 // --- End of Admin Setup ---
 

@@ -1,57 +1,54 @@
-import React from "react";
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { useAuth } from "./AuthContext";
-import {
-  FiGrid, FiShoppingCart, FiBarChart2, FiFileText,
-  FiUsers, FiUserPlus, FiLogOut,
-  FiShoppingBag // ✅ --- (1. IMPORT THE NEW ICON) ---
-} from "react-icons/fi";
+import React from 'react';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useAuth } from './AuthContext';
+import './assets/styles/sidebar.css';
+import './assets/styles/global.css';
 
-export default function Layout() {
+const Layout = () => {
   const { logout, currentUser } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
       await logout();
-      navigate("/login");
+      navigate('/login');
     } catch (error) {
-      console.error("Failed to log out", error);
+      console.error('Failed to log out:', error);
     }
   };
 
   return (
-    <div style={{ display: "flex" }}>
-      <aside className="sidebar">
+    <div className="layout-container">
+      <nav className="sidebar">
         <div className="sidebar-header">
-          <div className="sidebar-logo-circle"></div>
-          <h2 className="sidebar-title">Tiger Mango</h2>
+          <h3>Milk Tea POS</h3>
+          <p>Welcome, {currentUser?.email}</p>
         </div>
-        <nav className="sidebar-nav">
-          {/* ✅ --- (2. FIXED this link to go to "/inventory") --- */}
-          <NavLink to="/inventory" className="sidebar-link"><FiGrid /> Inventory</NavLink>
+        
+        <ul className="sidebar-menu">
+          <li><NavLink to="/">POS</NavLink></li>
+          <li><NavLink to="/orders">Order History</NavLink></li>
+          <li><NavLink to="/inventory">Inventory</NavLink></li>
           
-          {/* ✅ --- (3. ADDED this new link for Orders) --- */}
-          <NavLink to="/orders" className="sidebar-link"><FiShoppingBag /> Orders</NavLink>
-
-          <NavLink to="/purchase-history" className="sidebar-link"><FiShoppingCart /> Purchase History</NavLink>
-          <NavLink to="/sales-analytics" className="sidebar-link"><FiBarChart2 /> Sales Analytics</NavLink>
-          <NavLink to="/stock-logs" className="sidebar-link"><FiFileText /> Stock Logs</NavLink>
-          <NavLink to="/user-management" className="sidebar-link"><FiUsers /> User Management</NavLink>
-          <NavLink to="/create-user" className="sidebar-link"><FiUserPlus /> Create User</NavLink>
-        </nav>
-        <div className="sidebar-bottom">
-          {currentUser && (
-            <p className="sidebar-user">{currentUser.displayName || currentUser.email}</p>
-          )}
-          <button onClick={handleLogout} className="logout-btn">
-            <FiLogOut /> Logout
+          {/* ✅ --- (NEW) Links added back --- */}
+          <li><NavLink to="/sales">Sales Analytics</NavLink></li>
+          <li><NavLink to="/users">User Management</NavLink></li>
+          
+          {/* We will add Stock Logs & Purchase History later */}
+        </ul>
+        
+        <div className="sidebar-footer">
+          <button onClick={handleLogout} className="logout-button">
+            Log Out
           </button>
         </div>
-      </aside>
+      </nav>
+      
       <main className="main-content">
         <Outlet />
       </main>
     </div>
   );
-}
+};
+
+export default Layout;

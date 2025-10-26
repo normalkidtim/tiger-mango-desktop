@@ -1,180 +1,91 @@
-// src/pages/CreateUser.jsx
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { auth, db } from "../firebase";
-import "../assets/styles/create-user.css";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import '../assets/styles/create-user.css'; // New CSS file
 
-export default function CreateUser() {
+const CreateUser = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    contactNumber: "", // ✅ ADDED
-    role: "Employee",
-    password: "",
-    confirmPassword: "",
-  });
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e) => {
+  // NOTE: This creates a new user, but you'll need a backend
+  // to assign specific "roles" (like Admin vs. Cashier)
+  // This form creates a standard user.
+  
+  const handleCreate = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
+    if (loading) return;
+    setError('');
+    setLoading(true);
 
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-    if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters long.");
-      return;
-    }
-
+    const auth = getAuth();
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-      const user = userCredential.user;
-
-      const displayName = `${formData.firstName} ${formData.lastName}`;
-      await updateProfile(user, { displayName });
-
-      // ✅ ADDED contactNumber to the user document
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        displayName: displayName,
-        email: formData.email,
-        contactNumber: formData.contactNumber,
-        role: formData.role,
-        createdAt: serverTimestamp(),
-        status: "active",
-      });
-
-      setSuccess("User created successfully! Redirecting...");
-      setTimeout(() => navigate("/user-management"), 2000);
-
+      await createUserWithEmailAndPassword(auth, email, password);
+      alert('User created successfully!');
+      navigate('/users');
     } catch (err) {
+      setError(err.message);
       console.error("Error creating user:", err);
-      if (err.code === "auth/email-already-in-use") {
-        setError("This email address is already in use.");
-      } else {
-        setError("Failed to create user. Please try again.");
-      }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="create-user-card">
-      <div className="create-user-header">
-        <h2>Create a New User Account</h2>
-        <p>Fill out the details below to add a new member to the team.</p>
-      </div>
+    <div className="page-container">
+      <h2>Create New User</h2>
+      <p>Create a new account for a staff member.</p>
 
-      {error && <p className="auth-error">{error}</p>}
-      {success && <p className="auth-success">{success}</p>}
-
-      <form onSubmit={handleSubmit} className="create-user-form">
-        <div className="name-row">
+      <div className="create-user-form-container">
+        <form onSubmit={handleCreate}>
           <div className="form-group">
-            <label htmlFor="firstName">First Name</label>
+            <label htmlFor="email">Email</label>
             <input
-              id="firstName"
-              type="text"
-              name="firstName"
-              placeholder="e.g., John"
-              value={formData.firstName}
-              onChange={handleChange}
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="cashier@shop.com"
               required
             />
           </div>
-          <div className="form-group">
-            <label htmlFor="lastName">Last Name</label>
-            <input
-              id="lastName"
-              type="text"
-              name="lastName"
-              placeholder="e.g., Doe"
-              value={formData.lastName}
-              onChange={handleChange}
-              required
-            />
-          </div>
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="email">Email Address</label>
-          <input
-            id="email"
-            type="email"
-            name="email"
-            placeholder="e.g., john.doe@example.com"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        
-        {/* ✅ ADDED Contact Number Input */}
-        <div className="form-group">
-          <label htmlFor="contactNumber">Contact Number</label>
-          <input
-            id="contactNumber"
-            type="tel"
-            name="contactNumber"
-            placeholder="e.g., 09171234567"
-            value={formData.contactNumber}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="role">User Role</label>
-          <select id="role" name="role" value={formData.role} onChange={handleChange}>
-            <option value="Employee">Employee</option>
-            <option value="Admin">Admin</option>
-          </select>
-        </div>
-
-        <div className="name-row">
           <div className="form-group">
             <label htmlFor="password">Password</label>
             <input
+              type="password"
               id="password"
-              type="password"
-              name="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="Min. 6 characters"
-              value={formData.password}
-              onChange={handleChange}
               required
             />
           </div>
-          <div className="form-group">
-            <label htmlFor="confirmPassword">Confirm Password</label>
-            <input
-              id="confirmPassword"
-              type="password"
-              name="confirmPassword"
-              placeholder="Re-enter password"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-            />
+          
+          {error && <p className="form-error">{error}</p>}
+          
+          <div className="form-actions">
+            <button 
+              type="button" 
+              className="form-btn-cancel" 
+              onClick={() => navigate('/users')}
+              disabled={loading}
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit" 
+              className="form-btn-submit"
+              disabled={loading}
+            >
+              {loading ? 'Creating...' : 'Create User'}
+            </button>
           </div>
-        </div>
-
-        <button type="submit" className="create-user-button">
-          Create User
-        </button>
-      </form>
+        </form>
+      </div>
     </div>
   );
-}
+};
+
+export default CreateUser;
