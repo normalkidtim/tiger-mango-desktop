@@ -1,12 +1,16 @@
 // electron/preload.js
 const { contextBridge, ipcRenderer } = require('electron');
 
-contextBridge.exposeInMainWorld('electronAPI', {
+contextBridge.exposeInMainWorld('electron', {
+  // --- Auth Handlers ---
+  login: (credentials) => ipcRenderer.invoke('auth-login', credentials),
+  signup: (credentials) => ipcRenderer.invoke('auth-signup', credentials),
+  deleteFirebaseUser: (uid) => ipcRenderer.invoke('delete-firebase-user', uid),
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
-  authLogin: (email, password) => ipcRenderer.invoke('auth-login', { email, password }),
-  authSignup: (email, password, firstName, lastName) =>
-    ipcRenderer.invoke('auth-signup', { email, password, firstName, lastName }),
+  
+  // --- Order Handler ---
+  // This one creates the PENDING order
+  placeOrder: (orderData) => ipcRenderer.invoke('place-order', orderData),
 
-  // ✅ ADDED this line
-  deleteFirebaseUser: (uid) => ipcRenderer.invoke('delete-firebase-user', uid)
+  // We have removed completeOrder to start fresh
 });
