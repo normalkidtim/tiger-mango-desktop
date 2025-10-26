@@ -1,7 +1,7 @@
 {
   "name": "tiger-mango-desktop",
   "version": "1.0.0",
-  "description": "Tiger Mango Inventory Management System",
+  "description": "Tiger Mango Inventory Management",
   "main": "electron/main.cjs",
   "type": "module",
   "author": "Tiger Mango",
@@ -20,12 +20,12 @@
   },
   "dependencies": {
     "firebase": "^10.7.1",
-    "firebase-admin": "^13.5.0",
+    "firebase-admin": "^12.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^5.5.0",
-    "react-router-dom": "^7.9.3",
-    "recharts": "^2.15.4"
+    "react-router-dom": "^6.21.1",
+    "recharts": "^2.10.3"
   },
   "devDependencies": {
     "@types/react": "^18.2.43",
@@ -55,9 +55,7 @@
             "x64"
           ]
         }
-      ],
-      "icon": "build/icon.ico",
-      "publisherName": "Tiger Mango"
+      ]
     },
     "nsis": {
       "oneClick": false,
@@ -65,16 +63,6 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Tiger Mango Inventory"
-    },
-    "mac": {
-      "target": "dmg",
-      "icon": "build/icon.icns",
-      "category": "public.app-category.business"
-    },
-    "linux": {
-      "target": "AppImage",
-      "icon": "build/icon.png",
-      "category": "Office"
     }
   }
 }

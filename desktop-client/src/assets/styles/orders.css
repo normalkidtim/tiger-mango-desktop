@@ -1,0 +1,38 @@
+/* src/assets/styles/orders.css */
+
+.order-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.order-button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  color: #FFFFFF;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  width: 100px; /* Make buttons same width */
+  text-align: center;
+}
+
+.order-button:hover {
+  opacity: 0.8;
+}
+
+.order-button.button-complete {
+  background-color: #4CAF50; /* Green */
+}
+
+.order-button.button-cancel {
+  background-color: #f44336; /* Red */
+}
+
+.order-button.button-void {
+  background-color: #f59e0b; /* Amber/Yellow */
+  color: #111827; /* Dark text for yellow */
+}

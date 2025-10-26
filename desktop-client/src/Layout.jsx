@@ -3,7 +3,8 @@ import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import {
   FiGrid, FiShoppingCart, FiBarChart2, FiFileText,
-  FiUsers, FiUserPlus, FiLogOut
+  FiUsers, FiUserPlus, FiLogOut,
+  FiShoppingBag // ✅ --- (1. IMPORT THE NEW ICON) ---
 } from "react-icons/fi";
 
 export default function Layout() {
@@ -27,7 +28,12 @@ export default function Layout() {
           <h2 className="sidebar-title">Tiger Mango</h2>
         </div>
         <nav className="sidebar-nav">
-          <NavLink to="/" className="sidebar-link"><FiGrid /> Inventory</NavLink>
+          {/* ✅ --- (2. FIXED this link to go to "/inventory") --- */}
+          <NavLink to="/inventory" className="sidebar-link"><FiGrid /> Inventory</NavLink>
+          
+          {/* ✅ --- (3. ADDED this new link for Orders) --- */}
+          <NavLink to="/orders" className="sidebar-link"><FiShoppingBag /> Orders</NavLink>
+
           <NavLink to="/purchase-history" className="sidebar-link"><FiShoppingCart /> Purchase History</NavLink>
           <NavLink to="/sales-analytics" className="sidebar-link"><FiBarChart2 /> Sales Analytics</NavLink>
           <NavLink to="/stock-logs" className="sidebar-link"><FiFileText /> Stock Logs</NavLink>
