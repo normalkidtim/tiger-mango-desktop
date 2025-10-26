@@ -1,161 +1,84 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-// ✅ --- (FIXED THE TYPO HERE: 'in' is now 'from') ---
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore'; 
-import { FiBox, FiCoffee, FiPlus } from 'react-icons/fi';
-import '../assets/styles/inventory.css'; // Your existing CSS file
-
-// Helper function to make 'crushed-oreos' look like 'Crushed Oreos'
-const formatItemName = (key) => {
-  if (!key) return '';
-  return key.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-};
+import { doc, onSnapshot } from 'firebase/firestore';
+import '../assets/styles/inventory.css';
+import '../assets/styles/tables.css';
 
 const Inventory = () => {
-  // We are now fetching 3 objects, not 3 arrays
-  const [addonsData, setAddonsData] = useState(null);
-  const [cupsData, setCupsData] = useState(null);
-  const [strawsData, setStrawsData] = useState(null);
+  const [cups, setCups] = useState(null);
+  const [straws, setStraws] = useState(null);
+  const [addOns, setAddOns] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // This now listens to the 3 specific documents
   useEffect(() => {
     setLoading(true);
-    const docPaths = {
-      addons: 'inventory/add-ons',
-      cups: 'inventory/cups',
-      straws: 'inventory/straw',
-    };
+    const docRefs = [
+      doc(db, 'inventory', 'cups'),
+      doc(db, 'inventory', 'straw'),
+      doc(db, 'inventory', 'add-ons'),
+    ];
 
-    // Set up listeners for each document
-    const unsubAddons = onSnapshot(doc(db, docPaths.addons), (doc) => {
-      setAddonsData(doc.exists() ? doc.data() : {});
-    }, (err) => console.error("Addons listener error:", err));
+    const unsubscribes = docRefs.map((docRef, index) => {
+      return onSnapshot(docRef, (doc) => {
+        if (doc.exists()) {
+          const data = doc.data();
+          if (index === 0) setCups(data);
+          if (index === 1) setStraws(data);
+          if (index === 2) setAddOns(data);
+        } else {
+          console.warn(`Document not found at path: ${docRef.path}`);
+        }
+      });
+    });
 
-    const unsubCups = onSnapshot(doc(db, docPaths.cups), (doc) => {
-      setCupsData(doc.exists() ? doc.data() : {});
-    }, (err) => console.error("Cups listener error:", err));
-
-    const unsubStraws = onSnapshot(doc(db, docPaths.straws), (doc) => {
-      setStrawsData(doc.exists() ? doc.data() : {});
-    }, (err) => console.error("Straws listener error:", err));
-
-    // Stop listening when the page is closed
-    return () => {
-      unsubAddons();
-      unsubCups();
-      unsubStraws();
-    };
+    setLoading(false);
+    
+    return () => unsubscribes.forEach(unsub => unsub());
   }, []);
 
-  // Update loading state
-  useEffect(() => {
-    if (addonsData !== null && cupsData !== null && strawsData !== null) {
-      setLoading(false);
-    }
-  }, [addonsData, cupsData, strawsData]);
-
-  // This now updates a 'field' inside a document
-  const handleStockChange = async (docPath, fieldName, newStock) => {
-    const stockValue = Number(newStock);
-    if (isNaN(stockValue) || stockValue < 0) {
-      console.error("Invalid stock value");
-      // Revert UI change (or just rely on onSnapshot to do it)
-      return;
-    }
-    
-    // Temporarily update the UI for a fast feel
-    if (docPath === 'inventory/add-ons') setAddonsData(prev => ({ ...prev, [fieldName]: stockValue }));
-    if (docPath === 'inventory/cups') setCupsData(prev => ({ ...prev, [fieldName]: stockValue }));
-    if (docPath === 'inventory/straws') setStrawsData(prev => ({ ...prev, [fieldName]: stockValue }));
-
-    const itemRef = doc(db, docPath);
-    try {
-      // This uses dot notation for fields, which is safer
-      await updateDoc(itemRef, {
-        [fieldName]: stockValue
-      });
-      // The onSnapshot listener will soon get this change and confirm it
-    } catch (error) {
-      console.error("Error updating stock: ", error);
-      // TODO: Revert the UI state if the update fails
-    }
+  // ✅ --- (NEW) Helper function to format the item names ---
+  const formatItemName = (key) => {
+    return key
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
 
-  // This now takes an object (data) and loops over its keys
-  const renderInventorySection = (title, data, icon, docPath) => {
-    if (loading || !data) {
-      return (
-        <div className="inventory-card">
-          <div className="inventory-card-header">{icon} {title}</div>
-          <div className="inventory-item-list">
-            <p className="no-items-message">Loading...</p>
-          </div>
-        </div>
-      );
-    }
-    
-    // Turn the object { 'cheesecake': 100 } into an array [['cheesecake', 100]]
-    const items = Object.entries(data);
-
+  const renderTable = (title, data) => {
+    if (!data) return <p>Loading {title}...</p>;
     return (
-      <div className="inventory-card">
-        <div className="inventory-card-header">{icon} {title}</div>
-        <div className="inventory-item-list">
-          {items.length > 0 ? (
-            items.map(([key, stock]) => ( // 'key' is 'cheesecake', 'stock' is 100
-              <div className="inventory-item" key={key}>
-                <span className="inventory-item-name">{formatItemName(key)}</span>
-                <div className="inventory-item-stock">
-                  <input
-                    type="number"
-                    value={stock} // Use the stock value directly
-                    onChange={(e) => {
-                      // This updates the local state right away for a snappy feel
-                      const val = e.target.value;
-                      if (docPath === 'inventory/add-ons') setAddonsData(prev => ({ ...prev, [key]: val }));
-                      if (docPath === 'inventory/cups') setCupsData(prev => ({ ...prev, [key]: val }));
-                      if (docPath === 'inventory/straws') setStrawsData(prev => ({ ...prev, [key]: val }));
-                    }}
-                    onBlur={(e) => {
-                      // When the user clicks away, send the final value to Firebase
-                      handleStockChange(docPath, key, e.target.value)
-                    }}
-                  />
-                </div>
-              </div>
-            ))
-          ) : (
-            <p className="no-items-message">No items in this category.</p>
-          )}
-        </div>
+      <div className="table-box">
+        <h3>{title}</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Current Stock</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.entries(data).map(([key, value]) => (
+              <tr key={key}>
+                {/* ✅ --- (MODIFIED) Use the helper function here --- */}
+                <td>{formatItemName(key)}</td>
+                <td>{value}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     );
   };
 
-  // The props we send to renderInventorySection are now different
+  if (loading) return <div>Loading Inventory...</div>;
+
   return (
     <div className="page-container">
-      <h1>Inventory Management</h1>
-      <div className="inventory-sections">
-        {renderInventorySection(
-          "Add-Ons",
-          addonsData,
-          <FiPlus />,
-          "inventory/add-ons"
-        )}
-        {renderInventorySection(
-          "Cups",
-          cupsData,
-          <FiCoffee />,
-          "inventory/cups"
-        )}
-        {renderInventorySection(
-          "Straws",
-          strawsData,
-          <FiBox />,
-          "inventory/straw"
-        )}
+      <h2>Inventory Management</h2>
+      <div style={{ display: 'flex', flexDirection: 'row', gap: '20px' }}>
+        {renderTable('Cups', cups)}
+        {renderTable('Straws', straws)}
+        {renderTable('Add-ons', addOns)}
       </div>
     </div>
   );
