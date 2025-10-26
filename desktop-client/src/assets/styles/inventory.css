@@ -1,20 +1,120 @@
-/* src/assets/styles/inventory.css */
+/* ==========================================================================
+   Inventory Page Styles (Vertical List View)
+   ========================================================================== */
 
-.inventory-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 20px;
+.inventory-container {
+  padding: 1.5rem;
+  background-color: var(--background-color);
+  height: 100%;
 }
 
-.inventory-table-box {
-  margin-bottom: 0; /* Remove default margin from tables.css */
+.inventory-container h2 {
+  font-size: 2rem;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+  text-align: center;
+  border-bottom: 2px solid var(--primary-color);
+  padding-bottom: 1rem;
 }
 
-/* Make table text a bit smaller for dense view */
-.inventory-table-box table td {
-  font-size: 14px;
+/* ==========================================================================
+   NEW STYLES FOR VERTICAL LIST
+   ========================================================================== */
+
+/* Ito na ang container ng mga list items */
+.inventory-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Space sa pagitan ng bawat item */
 }
 
-.inventory-table-box table th {
-  font-size: 12px;
+/* Ito na ang bawat "row" o "item" sa listahan */
+.inventory-list-item {
+  display: flex;
+  flex-direction: row; /* Para magkakatabi ang mga detalye */
+  align-items: center; /* Para pantay-pantay sa gitna */
+  padding: 1rem 1.5rem;
+  background-color: var(--surface-color);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.2s ease;
+}
+
+.inventory-list-item:hover {
+  background-color: var(--border-color); /* Bahagyang kulay 'pag na-hover */
+}
+
+/* Lalagyan ng Name at Category */
+.inventory-list-item .item-details {
+  flex-grow: 1; /* Para ito ang um-occupy ng pinakamaraming space */
+}
+
+/* Item Name */
+.inventory-list-item .item-name {
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Item Category */
+.inventory-list-item .item-category {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Stock Count */
+.inventory-list-item .stock-count {
+  font-size: 1.5rem; /* Medyo malaki pa rin pero hindi kasing laki ng dati */
+  font-weight: 700;
+  color: var(--primary-color);
+  margin: 0 2rem; /* Space sa magkabilang gilid */
+  min-width: 60px; /* Para may pwesto */
+  text-align: right;
+}
+
+/* Lalagyan ng Edit Button */
+.inventory-list-item .item-actions {
+  margin-left: auto; /* Itutulak ang button sa pinaka-kanan */
+}
+
+.edit-btn {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 8px 20px; /* Mas maliit na button */
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.edit-btn:hover {
+  background-color: var(--primary-dark-color);
+}
+
+/* ==========================================================================
+   Category Groups (Styles para sa Headers)
+   ========================================================================== */
+
+.inventory-display-area {
+  margin-top: 1.5rem;
+}
+ 
+.category-group {
+  margin-bottom: 2rem;
+}
+
+/* Category Header (e.g., "CUPS", "LIDS") */
+.category-header {
+  font-size: 1.4rem;
+  color: var(--text-primary);
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid var(--primary-color);
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
