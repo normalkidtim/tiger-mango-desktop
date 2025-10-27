@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-// ❌ We no longer need firebase client here for placing orders
-// import { db } from '../firebase'; 
-// import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 import { menuData } from '../menuData';
 import ProductModal from '../components/ProductModal';
@@ -22,9 +21,12 @@ const POS = () => {
   );
   
   const activeProducts = foundCategory ? foundCategory.products : [];
+  // ✅ --- (NEW) Get the category name from the found category ---
   const activeCategoryName = foundCategory ? foundCategory.name : 'Uncategorized';
 
+  // ✅ --- (MODIFIED) This now accepts the category name ---
   const handleProductClick = (product, categoryName) => {
+    // ✅ --- (MODIFIED) We add the categoryName to the product object ---
     setSelectedProduct({ ...product, categoryName: categoryName });
     setIsModalOpen(true);
   };
@@ -46,7 +48,6 @@ const POS = () => {
 
   const cartTotal = cart.reduce((total, item) => total + item.finalPrice, 0);
 
-  // --- ✅ (MODIFIED) This function now calls the Electron backend ---
   const handlePlaceOrder = async () => {
     if (cart.length === 0) {
       alert("Cart is empty!");
@@ -57,25 +58,20 @@ const POS = () => {
     setIsPlacingOrder(true);
 
     try {
-      // Call the Electron main process to handle the order and transaction
-      const result = await window.electron.placeOrder({
-        cart: cart,
-        cartTotal: cartTotal
-      });
+      const newOrder = {
+        items: cart, 
+        totalPrice: cartTotal,
+        createdAt: serverTimestamp(),
+        status: 'Pending', 
+      };
 
-      if (result.success) {
-        alert(`Order Placed Successfully! Total: ${formatPrice(cartTotal)}`);
-        setCart([]);
-      } else {
-        // Show the specific error from the backend (e.g., "Not enough stock")
-        console.error("Failed to place order:", result.error);
-        alert(`Order Failed: ${result.error}`);
-      }
+      await addDoc(collection(db, 'orders'), newOrder);
 
+      alert(`Order Placed Successfully! Total: ${formatPrice(cartTotal)}`);
+      setCart([]);
     } catch (error) {
-      // This catches errors in the IPC call itself
-      console.error("Error communicating with main process: ", error);
-      alert("Failed to place the order. An application error occurred.");
+      console.error("Error placing order: ", error);
+      alert("Failed to place the order. Please check your connection and try again.");
     } finally {
       setIsPlacingOrder(false);
     }
@@ -109,20 +105,38 @@ const POS = () => {
 
         <section className="pos-products">
           <div className="product-grid">
-            {activeProducts.map((product) => (
-              <button
-                key={product.id}
-                className="product-card"
-                onClick={() => handleProductClick(product, activeCategoryName)}
-              >
-                <span className="product-card-name">{product.name}</span>
-                <span className="product-card-price">
-                  {product.prices.medium && !product.prices.large
-                    ? formatPrice(product.prices.medium)
-                    : `${formatPrice(product.prices.medium || 0)} - ${formatPrice(product.prices.large || 0)}`}
-                </span>
-              </button>
-            ))}
+            {activeProducts.map((product) => {
+              // --- 🐞 BUG FIX: Improved price display logic ---
+              const hasMediumPrice = typeof product.prices.medium === 'number';
+              const hasLargePrice = typeof product.prices.large === 'number';
+              let priceText = '';
+
+              if (hasMediumPrice && hasLargePrice) {
+                priceText = `${formatPrice(product.prices.medium)} - ${formatPrice(product.prices.large)}`;
+              } else if (hasMediumPrice) {
+                priceText = formatPrice(product.prices.medium);
+              } else if (hasLargePrice) {
+                priceText = formatPrice(product.prices.large);
+              } else {
+                priceText = formatPrice(0); // Fallback for no price
+              }
+              // --- End of fix ---
+
+              return (
+                <button
+                  key={product.id}
+                  className="product-card"
+                  // ✅ --- (MODIFIED) Pass the category name when a product is clicked ---
+                  onClick={() => handleProductClick(product, activeCategoryName)}
+                >
+                  <span className="product-card-name">{product.name}</span>
+                  <span className="product-card-price">
+                    {/* Use the new priceText variable here */}
+                    {priceText}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </section>
       </div>
@@ -141,6 +155,7 @@ const POS = () => {
                 <span className="cart-item-name">
                   {item.quantity}x {item.name} ({item.size})
                 </span>
+                {/* ✅ --- (NEW) Show the category in the cart --- */}
                 <span className="cart-item-category">
                   {item.categoryName}
                 </span>

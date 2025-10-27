@@ -8,7 +8,6 @@ export default function PurchaseHistory() {
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
 
   useEffect(() => {
     const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
@@ -20,23 +19,14 @@ export default function PurchaseHistory() {
   }, []);
 
   const filteredOrders = useMemo(() => {
-    let filtered = orders;
-
-    if (startDate && endDate) {
-      const start = new Date(startDate + "T00:00:00");
-      const end = new Date(endDate + "T23:59:59.999");
-      filtered = filtered.filter((o) => {
-        const d = o.createdAt?.toDate ? o.createdAt.toDate() : new Date(o.createdAt);
-        return d >= start && d <= end;
-      });
-    }
-
-    if (statusFilter !== "All") {
-      filtered = filtered.filter((o) => o.status === statusFilter);
-    }
-
-    return filtered;
-  }, [orders, startDate, endDate, statusFilter]);
+    if (!startDate || !endDate) return orders;
+    const start = new Date(startDate + "T00:00:00");
+    const end = new Date(endDate + "T23:59:59.999");
+    return orders.filter((o) => {
+      const d = o.createdAt?.toDate ? o.createdAt.toDate() : new Date(o.createdAt);
+      return d >= start && d <= end;
+    });
+  }, [orders, startDate, endDate]);
 
 
   return (
@@ -57,14 +47,9 @@ export default function PurchaseHistory() {
           <label>To:</label>
           <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
         </div>
-        <div className="filter-group">
-          <label>Status:</label>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-            <option value="All">All</option>
-            <option value="Completed">Completed</option>
-            <option value="Voided">Voided</option>
-          </select>
-        </div>
+        <button className="btn btn-outline" onClick={() => { setStartDate(""); setEndDate(""); }}>
+          Clear
+        </button>
       </div>
 
       <div className="table-box">
@@ -77,12 +62,11 @@ export default function PurchaseHistory() {
               <th>Size</th>
               <th>Qty</th>
               <th>Price (₱)</th>
-              <th>Status</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan="7" className="no-data">Loading...</td></tr>
+              <tr><td colSpan="6" className="no-data">Loading...</td></tr>
             ) : filteredOrders.flatMap((order) => {
                 // This logic now handles BOTH old (single item) and new (multi-item) order formats
                 const itemsToRender = order.items ? order.items : [order];
@@ -98,7 +82,6 @@ export default function PurchaseHistory() {
                       <td>{item.size}</td>
                       <td>{item.quantity}</td>
                       <td>{total.toLocaleString()}</td>
-                      <td>{order.status}</td>
                     </tr>
                   );
                 });

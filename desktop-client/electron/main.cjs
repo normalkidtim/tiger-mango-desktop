@@ -4,212 +4,253 @@ const path = require('path');
 const { initializeApp } = require('firebase/app');
 const { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } = require('firebase/auth');
 
-// --- FIREBASE ADMIN SETUP ---
+// ✅ --- ADDED: Firebase Admin Setup ---
 const admin = require('firebase-admin');
 const serviceAccount = require('./serviceAccountKey.json');
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
+ credential: admin.credential.cert(serviceAccount)
 });
 // --- End of Admin Setup ---
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAMqdQMw5xNo_JyVP453x13_gGcxvPZdnc",
-  authDomain: "tiger-mango.firebaseapp.com",
-  projectId: "tiger-mango",
-  storageBucket: "tiger-mango.firebasestorage.app",
-  messagingSenderId: "468721196593",
-  appId: "1:468721196593:web:7fb67ce445f4fe639fbf10",
-};
+// --- NEW IMPORTS FOR INVENTORY/ORDER LOGIC ---
+// 1. Initialize Firestore Database for Admin operations
+const db = admin.firestore();
+// --- END NEW IMPORTS ---
 
+// ❌ FIX: The menuData.js is an ES Module, so we need to use dynamic import.
+// We declare a mutable variable to hold the menu data once imported.
+let menuData = null;
+
+const firebaseConfig = {
+    apiKey: "AIzaSyAMqdQMw5xNo_JyVP453x13_gGcxvPZdnc",
+    authDomain: "tiger-mango.firebaseapp.com",
+    projectId: "tiger-mango",
+    storageBucket: "tiger-mango.firebasestorage.app",
+    messagingSenderId: "468721196593",
+    appId: "1:468721196593:web:7fb67ce445f4fe639fbf10",
+};
 initializeApp(firebaseConfig);
 const auth = getAuth();
-const db = admin.firestore(); // Use admin Firestore for backend operations
 
-// --- ✅ (MODIFIED) ---
-// This is now set to your new collection name
-const INVENTORY_COLLECTION_NAME = 'inventory-v3';
-// ---
-
-function createWindow() {
-  const win = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false,
-    },
-  });
-
-  if (!app.isPackaged) {
-    win.loadURL('http://localhost:5173');
-    win.webContents.openDevTools();
-  } else {
-    win.loadFile(path.join(__dirname, '../dist/index.html'));
-  }
+// ✅ NEW FUNCTION: Load menuData using dynamic import
+async function loadMenuData() {
+    try {
+        const module = await import('../src/menuData.js');
+        menuData = module.menuData;
+        console.log("menuData loaded successfully.");
+    } catch (error) {
+        console.error("Failed to load menuData:", error);
+    }
 }
 
-app.whenReady().then(createWindow);
+
+function createWindow() {
+  const win = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  if (!app.isPackaged) {
+    win.loadURL('http://localhost:5173');
+    win.webContents.openDevTools();
+  } else {
+    win.loadFile(path.join(__dirname, '../dist/index.html'));
+  }
+}
+
+// ✅ FIX: Load menuData before creating the window and setting up IPC handles
+app.whenReady().then(async () => {
+    await loadMenuData(); // Wait for menuData to load
+    createWindow();
+});
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
+  if (process.platform !== 'darwin') app.quit();
 });
 
-// --- AUTH HANDLERS ---
+// Auth: Login
 ipcMain.handle('auth-login', async (event, { email, password }) => {
-  try {
-    const cred = await signInWithEmailAndPassword(auth, email, password);
-    const user = cred.user;
-    return { success: true, user: { uid: user.uid, email: user.email, displayName: user.displayName } };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
+  try {
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    const user = cred.user;
+    return { success: true, user: { uid: user.uid, email: user.email, displayName: user.displayName } };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
 });
 
+// Auth: Signup
 ipcMain.handle('auth-signup', async (event, { email, password }) => {
-  try {
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-    const user = cred.user;
-    return { success: true, user: { uid: user.uid, email: user.email, displayName: user.displayName } };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    const user = cred.user;
+    return { success: true, user: { uid: user.uid, email: user.email, displayName: user.displayName } };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
 });
 
+// ✅ --- ADDED: Handle User Deletion from Authentication ---
 ipcMain.handle('delete-firebase-user', async (event, uid) => {
-  try {
-    await admin.auth().deleteUser(uid);
-    return { success: true };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
+  try {
+    await admin.auth().deleteUser(uid);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete user from Firebase Auth:", error);
+    return { success: false, error: error.message };
+  }
 });
 
 ipcMain.handle('get-app-version', () => app.getVersion());
 
-// --- ORDER HANDLERS ---
 
-// ✅ HANDLER 1: Creates the PENDING order (no stock deduction)
+// --- RECIPE HELPER FUNCTIONS (Uses the new menuData.js structure) ---
+// These functions now check if menuData is loaded and access it from the global variable
+function getProductRecipe(productId, size) {
+  if (!menuData) return null;
+  for (const category of menuData.categories) {
+    const product = category.products.find(p => p.id === productId);
+    if (product && product.recipe && product.recipe[size]) {
+      return product.recipe[size];
+    }
+  }
+  return null;
+}
+
+function getAddonRecipe(addonId) {
+  if (!menuData) return null;
+  const addon = menuData.addons.find(a => a.id === addonId);
+  if (addon && addon.recipe) {
+    return addon.recipe;
+  }
+  return null;
+}
+// --- END RECIPE HELPER FUNCTIONS ---
+
+
+// ✅ --- ADDED: Handle Order and Deduct Stock (Inventory) ---
 ipcMain.handle('place-order', async (event, { cart, cartTotal }) => {
-  if (!cart || cart.length === 0) {
+  if (!menuData) {
+     return { success: false, error: "System startup incomplete. menuData is not loaded." };
+  }
+  if (cart.length === 0) {
     return { success: false, error: "Cart is empty." };
   }
-  try {
-    await db.collection('orders').add({
-      items: cart,
-      totalPrice: cartTotal,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      status: 'Pending',
-    });
-    return { success: true };
-  } catch (error) {
-    console.error("Failed to create pending order: ", error);
-    return { success: false, error: error.message };
-  }
-});
 
-// ✅ HANDLER 2: COMPLETES the order and DEDUCTS stock
-ipcMain.handle('order-complete', async (event, orderId) => {
-  if (!orderId) {
-    return { success: false, error: "No Order ID provided." };
-  }
-
-  const orderRef = db.collection('orders').doc(orderId);
-  
-  // --- ✅ (MODIFIED) ---
-  // Now using your new collection name
-  const inventoryRef = db.collection(INVENTORY_COLLECTION_NAME);
-  // ---
-
-  try {
-    const transactionError = await db.runTransaction(async (transaction) => {
-      const orderDoc = await transaction.get(orderRef);
-      if (!orderDoc.exists) {
-        throw new Error("Order document not found.");
+  // 1. Build a map of all inventory items needed: { "collection/field": quantity_needed }
+  const itemsToDeduct = {};
+  for (const item of cart) {
+    // a. Get the recipe for the main drink (e.g., "consumables/medium-cup": 1)
+    const productRecipe = getProductRecipe(item.id, item.size);
+    if (productRecipe) {
+      for (const [ingredient, quantity] of Object.entries(productRecipe)) {
+        const key = ingredient; // e.g., "consumables/medium-cup"
+        const amount = quantity * item.quantity;
+        itemsToDeduct[key] = (itemsToDeduct[key] || 0) + amount;
       }
-
-      const orderData = orderDoc.data();
-      if (orderData.status !== 'Pending') {
-        throw new Error("This order is already completed or cancelled.");
-      }
-
-      if (!orderData || !Array.isArray(orderData.items)) {
-        throw new Error("Order data or items list is invalid.");
-      }
-
-      const inventoryUpdates = new Map();
-      const inventoryRefsToGet = new Set();
-
-      for (const item of orderData.items) {
-        const quantity = item.quantity || 1;
-        if (!item.size) throw new Error(`Item "${item.name}" is missing a size.`);
-        
-        const cupId = `cup-${item.size.toLowerCase()}`;
-        inventoryRefsToGet.add(cupId);
-        inventoryUpdates.set(cupId, (inventoryUpdates.get(cupId) || 0) + quantity);
-
-        const strawId = 'straw-boba';
-        inventoryRefsToGet.add(strawId);
-        inventoryUpdates.set(strawId, (inventoryUpdates.get(strawId) || 0) + quantity);
-
-        if (item.addons && Array.isArray(item.addons)) {
-          for (const addon of item.addons) {
-            const addonId = `addon-${addon.id}`;
-            inventoryRefsToGet.add(addonId);
-            inventoryUpdates.set(addonId, (inventoryUpdates.get(addonId) || 0) + quantity);
-          }
-        }
-      }
-
-      // --- ✅ (MODIFIED) ---
-      // Now using your new collection name
-      const inventoryGetPromises = Array.from(inventoryRefsToGet).map(docId =>
-        transaction.get(inventoryRef.doc(docId))
-      );
-      // ---
-      
-      const inventorySnaps = await Promise.all(inventoryGetPromises);
-      const inventoryDocs = new Map();
-
-      for (const snap of inventorySnaps) {
-        if (!snap.exists) {
-          throw new Error(`Inventory item not found in database: ${snap.id} (in collection ${INVENTORY_COLLECTION_NAME})`);
-        }
-        inventoryDocs.set(snap.id, snap.data());
-      }
-
-      for (const [docId, amountNeeded] of inventoryUpdates.entries()) {
-        const itemDoc = inventoryDocs.get(docId);
-        const itemName = (itemDoc && itemDoc.name) ? itemDoc.name : docId;
-
-        if (!itemDoc || itemDoc.stock === undefined) {
-          throw new Error(`Inventory item "${itemName}" has no 'stock' field.`);
-        }
-        if (itemDoc.stock < amountNeeded) {
-          throw new Error(`Not enough stock for: ${itemName}. Need ${amountNeeded}, have ${itemDoc.stock}.`);
-        }
-        
-        // --- ✅ (MODIFIED) ---
-        // Now using your new collection name
-        transaction.update(inventoryRef.doc(docId), { 
-          stock: admin.firestore.FieldValue.increment(-amountNeeded) 
-        });
-        // ---
-      }
-
-      transaction.update(orderRef, { status: 'Completed' });
-    });
-
-    if (transactionError) {
-      return { success: false, error: transactionError.message };
     }
 
+    // b. Get the recipe for each addon (e.g., "toppings/pearl": 1)
+    for (const addon of item.addons) {
+      const addonRecipe = getAddonRecipe(addon.id);
+      if (addonRecipe) {
+        for (const [ingredient, quantity] of Object.entries(addonRecipe)) {
+          const key = ingredient; // e.g., "toppings/pearl"
+          const amount = quantity * item.quantity;
+          itemsToDeduct[key] = (itemsToDeduct[key] || 0) + amount;
+        }
+      }
+    }
+  }
+  
+  // 2. Process the transaction (ensures atomic stock deduction)
+  try {
+    await db.runTransaction(async (t) => {
+      const inventoryRef = db.collection('inventory');
+      const stockLogsRef = db.collection('stockLogs');
+
+      // Get list of unique top-level collection documents we need to fetch (e.g., 'consumables', 'toppings')
+      const uniqueCollections = [...new Set(Object.keys(itemsToDeduct).map(key => key.split('/')[0]))];
+      
+      // Fetch all required inventory documents
+      const docs = await Promise.all(
+        uniqueCollections.map(docId => t.get(inventoryRef.doc(docId)))
+      );
+      
+      const newStockUpdates = {}; // Prepare the updates { 'collectionId': { 'fieldId': new_value } }
+      
+      // 3. Check stock levels for ALL required items
+      for (const [key, quantityNeeded] of Object.entries(itemsToDeduct)) {
+        const [collectionId, fieldId] = key.split('/');
+        const docSnapshot = docs.find(doc => doc.id === collectionId);
+
+        if (!docSnapshot || !docSnapshot.exists) {
+            throw new Error(`Inventory category '${collectionId}' not found in database.`);
+        }
+        
+        const currentStock = docSnapshot.data()[fieldId];
+
+        if (currentStock === undefined) {
+             throw new Error(`Inventory item '${fieldId}' not tracked in category '${collectionId}'.`);
+        }
+        
+        if (currentStock < quantityNeeded) {
+          // Log a failed order attempt
+          t.set(stockLogsRef.doc(), {
+              timestamp: admin.firestore.FieldValue.serverTimestamp(),
+              type: 'ORDER_FAILED',
+              category: collectionId,
+              item: fieldId,
+              quantity: currentStock,
+              needed: quantityNeeded,
+              reason: 'INSUFFICIENT_STOCK_FOR_ORDER',
+          });
+          // Stop the transaction and report error to user
+          throw new Error(`Insufficient stock for ${fieldId}. Current: ${currentStock}, Needed: ${quantityNeeded}`);
+        }
+        
+        const newStock = currentStock - quantityNeeded;
+        
+        // Prepare the update for later
+        if (!newStockUpdates[collectionId]) {
+          newStockUpdates[collectionId] = {};
+        }
+        newStockUpdates[collectionId][fieldId] = newStock;
+      }
+
+      // 4. Perform the updates (deductions) inside the transaction
+      for (const collectionId of Object.keys(newStockUpdates)) {
+        t.update(inventoryRef.doc(collectionId), newStockUpdates[collectionId]);
+      }
+      
+      // 5. Save the successful order record
+      const ordersRef = db.collection('orders');
+      t.set(ordersRef.doc(), {
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        cart: cart, 
+        total: cartTotal,
+        itemsDeducted: itemsToDeduct,
+        status: 'Pending', // New orders start as Pending
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      
+    }); // End of db.runTransaction
+
     return { success: true };
 
   } catch (error) {
-    console.error("Stock Deduction Transaction FAILED: ", error);
-    return { success: false, error: error.message };
+    console.error("Transaction failed:", error);
+    // Return a user-friendly error message
+    if (error.message.includes("Insufficient stock")) {
+       return { success: false, error: error.message };
+    }
+    return { success: false, error: "Database error: Could not complete order. Check console for details." };
   }
 });
-
+// --- END ADDED ORDER LOGIC ---
