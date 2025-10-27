@@ -254,3 +254,50 @@ ipcMain.handle('place-order', async (event, { cart, cartTotal }) => {
   }
 });
 // --- END ADDED ORDER LOGIC ---
+// electron/main.cjs (New snippet to be added at the END of the file)
+// Note: This assumes 'db' (admin.firestore()) and 'admin' are already defined at the top of main.cjs
+
+// Handler to update specific stock fields securely
+ipcMain.handle('update-inventory-stock', async (event, docId, fieldId, newStock) => {
+    // 1. Basic validation
+    if (!docId || !fieldId || newStock === undefined || isNaN(newStock)) {
+        return { success: false, error: "Invalid input provided." };
+    }
+    
+    // Ensure stock is an integer and non-negative
+    const stockValue = parseInt(newStock);
+    if (stockValue < 0 || stockValue === null) {
+        return { success: false, error: "Stock must be a non-negative integer." };
+    }
+    
+    const db = admin.firestore(); 
+
+    try {
+        const inventoryRef = db.collection('inventory').doc(docId);
+        
+        // Use a dynamic object key for the field to update (e.g., { 'medium-cup': 150 })
+        const updateObject = {
+            [fieldId]: stockValue
+        };
+
+        await inventoryRef.update(updateObject);
+        
+        // Log the stock change for history/auditing (Recommended)
+        await db.collection('stockLogs').add({
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            type: 'MANUAL_ADJUSTMENT',
+            document: docId,
+            field: fieldId,
+            newQuantity: stockValue,
+        });
+
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to update inventory stock:", error.details || error.message);
+        // Specifically check for 'No document to update' errors
+        if (error.message.includes('NOT_FOUND')) {
+             return { success: false, error: `Error: Inventory item not found. Check if '${docId}' exists.` };
+        }
+        return { success: false, error: `Database update failed. Check console for details.` };
+    }
+});

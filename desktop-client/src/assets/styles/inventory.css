@@ -1,120 +1,227 @@
-/* ==========================================================================
-   Inventory Page Styles (Vertical List View)
-   ========================================================================== */
+/* src/assets/styles/inventory.css */
 
 .inventory-container {
-  padding: 1.5rem;
-  background-color: var(--background-color);
-  height: 100%;
+    padding: 20px;
+    background-color: var(--color-background-page); 
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .inventory-container h2 {
-  font-size: 2rem;
-  color: var(--text-primary);
-  margin-bottom: 1.5rem;
-  text-align: center;
-  border-bottom: 2px solid var(--primary-color);
-  padding-bottom: 1rem;
+    margin-bottom: 15px;
+    color: var(--color-text-header);
 }
 
-/* ==========================================================================
-   NEW STYLES FOR VERTICAL LIST
-   ========================================================================== */
-
-/* Ito na ang container ng mga list items */
-.inventory-list-container {
-  display: flex;
-  flex-direction: column;
-  gap: 8px; /* Space sa pagitan ng bawat item */
+.filter-container {
+    margin-bottom: 25px;
 }
 
-/* Ito na ang bawat "row" o "item" sa listahan */
-.inventory-list-item {
-  display: flex;
-  flex-direction: row; /* Para magkakatabi ang mga detalye */
-  align-items: center; /* Para pantay-pantay sa gitna */
-  padding: 1rem 1.5rem;
-  background-color: var(--surface-color);
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-  transition: background-color 0.2s ease;
+/* --- Inventory Display Area: Table-Based View --- */
+
+.inventory-display-content {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    height: auto;
+    overflow: visible;
 }
 
-.inventory-list-item:hover {
-  background-color: var(--border-color); /* Bahagyang kulay 'pag na-hover */
-}
-
-/* Lalagyan ng Name at Category */
-.inventory-list-item .item-details {
-  flex-grow: 1; /* Para ito ang um-occupy ng pinakamaraming space */
-}
-
-/* Item Name */
-.inventory-list-item .item-name {
-  font-size: 1.1rem;
-  color: var(--text-primary);
-  font-weight: 600;
-  margin: 0;
-}
-
-/* Item Category */
-.inventory-list-item .item-category {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-/* Stock Count */
-.inventory-list-item .stock-count {
-  font-size: 1.5rem; /* Medyo malaki pa rin pero hindi kasing laki ng dati */
-  font-weight: 700;
-  color: var(--primary-color);
-  margin: 0 2rem; /* Space sa magkabilang gilid */
-  min-width: 60px; /* Para may pwesto */
-  text-align: right;
-}
-
-/* Lalagyan ng Edit Button */
-.inventory-list-item .item-actions {
-  margin-left: auto; /* Itutulak ang button sa pinaka-kanan */
-}
-
-.edit-btn {
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  padding: 8px 20px; /* Mas maliit na button */
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.2s ease;
-  font-size: 0.9rem;
-}
-
-.edit-btn:hover {
-  background-color: var(--primary-dark-color);
-}
-
-/* ==========================================================================
-   Category Groups (Styles para sa Headers)
-   ========================================================================== */
-
-.inventory-display-area {
-  margin-top: 1.5rem;
-}
- 
 .category-group {
-  margin-bottom: 2rem;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 8px;
+    padding: 0;
+    overflow: hidden; 
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); 
 }
 
-/* Category Header (e.g., "CUPS", "LIDS") */
 .category-header {
-  font-size: 1.4rem;
-  color: var(--text-primary);
-  padding-bottom: 0.5rem;
-  margin-bottom: 1rem;
-  border-bottom: 2px solid var(--primary-color);
-  text-transform: uppercase;
-  letter-spacing: 1px;
+    background-color: var(--color-primary-dark); 
+    color: var(--color-white);
+    padding: 8px 15px;
+    margin: 0;
+    font-size: 1.05em;
+    font-weight: 600;
+}
+
+/* Table Styling - CRITICAL FIXES HERE */
+.inventory-table {
+    width: 100%;
+    table-layout: fixed; /* Forces column widths to be respected */
+    border-collapse: collapse;
+    background-color: var(--color-background-card); 
+}
+
+/* Table Header */
+.inventory-table thead th {
+    background-color: var(--color-background-header);
+    color: var(--color-text-header);
+    font-weight: 500;
+    text-align: left; 
+    padding: 8px 15px; 
+    border-bottom: 2px solid var(--color-border-light);
+}
+
+/* --- COLUMN WIDTH AND ALIGNMENT CORRECTION --- */
+/* Item Name Column (65%) */
+.inventory-table th:first-child,
+.inventory-table td:first-child {
+    width: 65%;
+    padding-left: 20px;
+    text-align: left;
+}
+
+/* Stock Column (15%) */
+.inventory-table th:nth-child(2),
+.inventory-table td:nth-child(2) {
+    width: 15%;
+    text-align: center;
+}
+
+/* Action Column (20%) */
+.inventory-table th:nth-child(3),
+.inventory-table td:nth-child(3) {
+    width: 20%;
+    text-align: center;
+    padding-right: 20px;
+}
+/* --- END COLUMN CORRECTION --- */
+
+
+/* Table Body Rows */
+.inventory-table tbody tr {
+    transition: background-color 0.1s ease;
+}
+
+.inventory-table tbody tr:hover {
+    background-color: var(--color-hover); 
+}
+
+.inventory-table tbody td {
+    padding: 8px 0; 
+    border-bottom: 1px solid var(--color-border-subtle);
+    font-size: 0.95em;
+    color: var(--color-text-body);
+}
+
+/* Last row in the body removes the bottom border */
+.inventory-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Edit Button Theming */
+.inventory-table .edit-btn {
+    padding: 4px 10px;
+    border: 1px solid var(--color-action-border); 
+    background-color: var(--color-action-background); 
+    color: var(--color-action-text);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em; 
+    font-weight: 500;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+    min-width: 50px;
+}
+
+.inventory-table .edit-btn:hover {
+    background-color: var(--color-action-hover);
+    border-color: var(--color-action-hover);
+}
+
+/* --- MODAL STYLING FOR EditStockModal --- */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: var(--color-background-card);
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 400px;
+    color: var(--color-text-body);
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: var(--color-text-header);
+}
+
+.modal-content p {
+    margin-bottom: 10px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.form-group input[type="number"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--color-border-light);
+    border-radius: 5px;
+    font-size: 1em;
+    box-sizing: border-box;
+    background-color: var(--color-background-input);
+    color: var(--color-text-body);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.button-cancel {
+    padding: 10px 15px;
+    border: 1px solid var(--color-action-border);
+    background-color: var(--color-background-card);
+    color: var(--color-text-body);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+.button-cancel:hover {
+    background-color: var(--color-hover);
+}
+
+.button-primary {
+    padding: 10px 15px;
+    border: none;
+    background-color: var(--color-primary); /* Use your primary action color */
+    color: var(--color-white);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+.button-primary:hover:not(:disabled) {
+    background-color: var(--color-primary-dark);
+}
+.button-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.loading, .error-message {
+    text-align: center;
+    padding: 20px;
+    color: var(--color-text-body);
 }
