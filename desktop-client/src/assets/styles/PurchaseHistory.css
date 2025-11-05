@@ -1,0 +1,144 @@
+/* web-client/src/assets/styles/PurchaseHistory.css */
+
+/* This container holds all the order cards */
+.history-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* The .card style comes from global.css */
+
+/* Header: Contains Status and Timestamp */
+.card-header-history {
+  display: flex;
+  flex-wrap: wrap; /* Allow wrapping on small screens */
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background-color: var(--c-bg-body);
+  border-bottom: 1px solid var(--c-border);
+}
+
+/* Status Badge (e.g., "Completed", "Voided") */
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.status-badge.completed {
+  background-color: var(--c-green-light);
+  color: var(--c-green);
+}
+
+.status-badge.voided {
+  background-color: var(--c-danger-light);
+  color: var(--c-danger);
+}
+
+.timestamp-text {
+  font-size: 0.85rem;
+  color: var(--c-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Body: Contains Cashier and Total */
+.card-body-history {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.content-row-history {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1rem;
+}
+
+.content-row-history .label {
+  font-weight: 500;
+  color: var(--c-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.content-row-history .value {
+  font-weight: 600;
+  color: var(--c-text-primary);
+}
+
+.content-row-history .value.total {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+/* Footer: Contains the list of items */
+.items-container-history {
+  background: var(--c-bg-body);
+  padding: 12px 20px;
+  border-top: 1px solid var(--c-border);
+  border-bottom-left-radius: 16px; 
+  border-bottom-right-radius: 16px;
+}
+
+.item-row-history {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; /* Align to top */
+  padding: 10px 0; 
+  border-bottom: 1px solid var(--c-border);
+}
+.item-row-history:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.item-row-history:first-child {
+  padding-top: 0;
+}
+
+.item-details-history {
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* Take up available space */
+  padding-right: 10px; /* Space before price */
+}
+
+.item-category-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--c-brand); 
+  text-transform: uppercase;
+}
+
+.item-name-history {
+  font-size: 0.95rem;
+  color: var(--c-text-primary);
+  font-weight: 500;
+}
+
+.item-addons-history {
+  font-size: 0.9rem;
+  color: var(--c-text-secondary);
+  font-style: italic;
+  padding-top: 4px; 
+}
+
+/* Style for the item's final price */
+.item-price-history {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--c-text-primary);
+  text-align: right;
+  min-width: 80px; /* Helps align prices */
+}

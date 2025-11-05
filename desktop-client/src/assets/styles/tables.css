@@ -1,72 +1,58 @@
-/* src/assets/styles/tables.css */
+/* web-client/src/assets/styles/tables.css */
 
-/* This is the white card container for the table */
-.table-box {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  overflow: hidden; /* Ensures rounded corners on the table */
-  margin-bottom: 24px;
+.card table { 
+  width: 100%; 
+  border-collapse: collapse; 
+}
+.card.no-padding .card-body {
+    padding: 0;
+    overflow-x: auto; /* Allow table to scroll horizontally on mobile */
 }
 
-.table-box h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--border-color);
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-table thead tr {
-  background-color: var(--bg-main); /* Light gray header */
-}
-
-table th {
-  padding: 16px 24px;
+.card th {
+  background: var(--c-bg-body);
+  color: var(--c-text-secondary);
+  padding: 12px 24px; 
   text-align: left;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
+  font-size: 0.8rem; 
+  font-weight: 600; 
+  text-transform: uppercase; 
   letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--c-border); 
+}
+.card td { 
+  padding: 16px 24px; 
+  border-bottom: 1px solid var(--c-border); 
+  font-size: 0.95rem; 
+  color: var(--c-text-primary); 
 }
 
-table tbody tr {
-  border-bottom: 1px solid var(--border-color);
+/* Style the first th/td */
+.card th:first-child, .card td:first-child {
+  padding-left: 24px;
 }
-table tbody tr:last-child {
-  border-bottom: none;
-}
-
-table td {
-  padding: 16px 24px;
-  font-size: 15px;
-  color: var(--text-primary);
-  vertical-align: top;
+/* Style the last th/td */
+.card th:last-child, .card td:last-child {
+  padding-right: 24px;
 }
 
-/* For empty table states */
-.no-data {
+.card tbody tr:last-child td { 
+  border-bottom: none; 
+}
+.card tbody tr:hover { 
+  background-color: var(--c-bg-body); 
+}
+
+/* Make table inputs blend in */
+/* UPDATED: Uses new "inset" input style */
+.card td .input-field {
+  width: 90px;
+  padding: 8px 10px;
   text-align: center;
-  color: var(--text-secondary);
-  padding: 40px;
-  font-size: 16px;
+  font-weight: 500;
+  background-color: var(--c-bg-body);
+  border-color: transparent;
 }
-
-/* For item lists inside a table cell */
-table td ul {
-  margin: 0;
-  padding-left: 20px;
-}
-table td li {
-  margin-bottom: 6px;
-}
-table td li:last-child {
-  margin-bottom: 0;
+.card td .input-field:focus {
+  background-color: var(--c-bg-card);
 }

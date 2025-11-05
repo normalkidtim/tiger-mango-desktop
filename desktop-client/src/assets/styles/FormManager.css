@@ -1,0 +1,58 @@
+/* web-client/src/assets/styles/FormManager.css */
+
+/* Most styles are now in global.css */
+
+/* Container for grouping inline fields */
+.form-group-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px; /* Added margin for stacking */
+}
+.form-group-item label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--c-text-secondary);
+}
+
+/* Wrapper for fields that should appear on a single line */
+.form-inline-group {
+    display: flex;
+    gap: 16px;
+    align-items: flex-end; 
+}
+
+.form-inline-group .form-group-item {
+    flex: 1; 
+    margin-bottom: 0;
+}
+.form-inline-group .addon-name-field {
+    flex: 2;
+}
+.form-inline-group .addon-price-field {
+    flex: 1;
+}
+
+/* For 2-col forms like Add Product/Category */
+.form-row-2-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+/* --- Mobile Responsiveness for Inline Forms --- */
+@media (max-width: 768px) {
+    .form-row-2-col {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+    .form-inline-group {
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+    }
+    .form-inline-group .btn {
+        width: 100%;
+        margin-top: 5px;
+    }
+}

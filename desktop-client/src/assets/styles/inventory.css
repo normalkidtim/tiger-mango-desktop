@@ -1,227 +1,136 @@
-/* src/assets/styles/inventory.css */
+/* web-client/src/assets/styles/inventory.css */
 
-.inventory-container {
-    padding: 20px;
-    background-color: var(--color-background-page); 
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
+/* .card styles come from global.css */
+
+.inventory-sections { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
+  gap: 24px; 
 }
 
-.inventory-container h2 {
-    margin-bottom: 15px;
-    color: var(--color-text-header);
+/* UPDATED: Added padding here */
+.inventory-item-list { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 16px; 
+  padding: 24px; /* This creates the space below the header */
 }
 
-.filter-container {
-    margin-bottom: 25px;
+.inventory-item { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  padding-bottom: 16px; 
+  border-bottom: 1px solid var(--c-border); 
+}
+.inventory-item:last-child { 
+  border-bottom: none; 
+  padding-bottom: 0; 
+}
+.inventory-item-name { 
+  font-size: 1rem; 
+  color: var(--c-text-primary); 
+  font-weight: 500;
+}
+.inventory-item-stock {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-/* --- Inventory Display Area: Table-Based View --- */
 
-.inventory-display-content {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    height: auto;
-    overflow: visible;
+/* --- STYLES FOR EDIT MODE --- */
+
+/* Read-only state */
+.inventory-item-stock.read-only {
+  gap: 16px; 
 }
 
-.category-group {
-    border: 1px solid var(--color-border-subtle);
-    border-radius: 8px;
-    padding: 0;
-    overflow: hidden; 
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); 
+.inventory-item-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--c-text-primary);
+  min-width: 40px;
+  text-align: right;
 }
 
-.category-header {
-    background-color: var(--color-primary-dark); 
-    color: var(--color-white);
-    padding: 8px 15px;
-    margin: 0;
-    font-size: 1.05em;
-    font-weight: 600;
+/* Edit-mode state */
+.inventory-item-stock.edit-mode input {
+  width: 80px; 
+  padding: 8px; 
+  font-size: 1rem; 
+  font-family: var(--font-main); 
+  text-align: center; 
+  font-weight: 600;
+  border: 1px solid var(--c-brand); 
+  background-color: var(--c-bg-card); 
+  color: var(--c-text-primary);
+  border-radius: 6px; 
+  outline: none; 
+  -moz-appearance: textfield; 
+  transition: all 0.2s ease;
+  box-shadow: 0 0 0 3px var(--c-brand-light);
 }
 
-/* Table Styling - CRITICAL FIXES HERE */
-.inventory-table {
-    width: 100%;
-    table-layout: fixed; /* Forces column widths to be respected */
-    border-collapse: collapse;
-    background-color: var(--color-background-card); 
+.inventory-item-stock.edit-mode input::-webkit-outer-spin-button, 
+.inventory-item-stock.edit-mode input::-webkit-inner-spin-button { 
+  -webkit-appearance: none; margin: 0; 
 }
 
-/* Table Header */
-.inventory-table thead th {
-    background-color: var(--color-background-header);
-    color: var(--color-text-header);
-    font-weight: 500;
-    text-align: left; 
-    padding: 8px 15px; 
-    border-bottom: 2px solid var(--color-border-light);
+/* Icon Buttons */
+.inventory-delete-btn,
+.btn-edit-stock,
+.btn-save-stock,
+.btn-cancel-stock {
+  background: none;
+  border: none;
+  color: var(--c-text-secondary);
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
 }
 
-/* --- COLUMN WIDTH AND ALIGNMENT CORRECTION --- */
-/* Item Name Column (65%) */
-.inventory-table th:first-child,
-.inventory-table td:first-child {
-    width: 65%;
-    padding-left: 20px;
-    text-align: left;
+.btn-edit-stock:hover {
+  background-color: var(--c-blue-light);
+  color: var(--c-blue);
 }
 
-/* Stock Column (15%) */
-.inventory-table th:nth-child(2),
-.inventory-table td:nth-child(2) {
-    width: 15%;
-    text-align: center;
+.inventory-delete-btn:hover {
+  background-color: var(--c-danger-light);
+  color: var(--c-danger);
 }
 
-/* Action Column (20%) */
-.inventory-table th:nth-child(3),
-.inventory-table td:nth-child(3) {
-    width: 20%;
-    text-align: center;
-    padding-right: 20px;
+.btn-save-stock {
+  color: var(--c-green);
 }
-/* --- END COLUMN CORRECTION --- */
-
-
-/* Table Body Rows */
-.inventory-table tbody tr {
-    transition: background-color 0.1s ease;
+.btn-save-stock:hover {
+  background-color: var(--c-green-light);
 }
 
-.inventory-table tbody tr:hover {
-    background-color: var(--color-hover); 
+.btn-cancel-stock {
+  color: var(--c-danger);
+}
+.btn-cancel-stock:hover {
+  background-color: var(--c-danger-light);
+}
+/* --- END STYLES --- */
+
+
+.no-items-message { 
+  padding: 20px; 
+  text-align: center; 
+  color: var(--c-text-secondary); 
+  font-style: italic; 
 }
 
-.inventory-table tbody td {
-    padding: 8px 0; 
-    border-bottom: 1px solid var(--color-border-subtle);
-    font-size: 0.95em;
-    color: var(--color-text-body);
-}
-
-/* Last row in the body removes the bottom border */
-.inventory-table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-/* Edit Button Theming */
-.inventory-table .edit-btn {
-    padding: 4px 10px;
-    border: 1px solid var(--color-action-border); 
-    background-color: var(--color-action-background); 
-    color: var(--color-action-text);
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.85em; 
-    font-weight: 500;
-    transition: background-color 0.15s ease, border-color 0.15s ease;
-    min-width: 50px;
-}
-
-.inventory-table .edit-btn:hover {
-    background-color: var(--color-action-hover);
-    border-color: var(--color-action-hover);
-}
-
-/* --- MODAL STYLING FOR EditStockModal --- */
-.modal-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black background */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.modal-content {
-    background-color: var(--color-background-card);
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    width: 90%;
-    max-width: 400px;
-    color: var(--color-text-body);
-}
-
-.modal-content h3 {
-    margin-top: 0;
-    margin-bottom: 15px;
-    color: var(--color-text-header);
-}
-
-.modal-content p {
-    margin-bottom: 10px;
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 500;
-}
-
-.form-group input[type="number"] {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid var(--color-border-light);
-    border-radius: 5px;
-    font-size: 1em;
-    box-sizing: border-box;
-    background-color: var(--color-background-input);
-    color: var(--color-text-body);
-}
-
-.modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-.button-cancel {
-    padding: 10px 15px;
-    border: 1px solid var(--color-action-border);
-    background-color: var(--color-background-card);
-    color: var(--color-text-body);
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.15s;
-}
-.button-cancel:hover {
-    background-color: var(--color-hover);
-}
-
-.button-primary {
-    padding: 10px 15px;
-    border: none;
-    background-color: var(--color-primary); /* Use your primary action color */
-    color: var(--color-white);
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.15s;
-}
-.button-primary:hover:not(:disabled) {
-    background-color: var(--color-primary-dark);
-}
-.button-primary:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.loading, .error-message {
-    text-align: center;
-    padding: 20px;
-    color: var(--color-text-body);
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .inventory-sections {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
 }

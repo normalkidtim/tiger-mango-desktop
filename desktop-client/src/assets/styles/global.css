@@ -1,66 +1,273 @@
-/* src/assets/styles/global.css */
+/* ---
+  GLOBAL.CSS
+  This is the main design system file.
+--- */
 
-/* Use a modern font stack */
+/* 1. COLOR PALETTE (NEW "TEALICIEUX" LIGHT THEME) */
 :root {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
-    Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* Brand Colors (From Image) */
+  --c-brand: #3A6A70; /* Dark Teal */
+  --c-brand-light: rgba(58, 106, 112, 0.1); /* Light Teal BG */
+  --c-brand-dark: #2F565B;
+  --c-brand-gradient: linear-gradient(to right, #3A6A70 0%, #4B8890 100%);
+  
+  /* Neutral Colors (Light Mode) */
+  --c-bg-body: #F9FAFB;    /* Page Background (Very Light Gray) */
+  --c-bg-card: #FFFFFF;    /* Card Background (White) */
+  --c-border: #E5E7EB;    /* Main Border Color */
+  --c-text-primary: #363636;  /* Dark Gray Text (From Image) */
+  --c-text-secondary: #6B7280; /* Lighter Gray Text */
+  --c-text-placeholder: #9CA3AF;
 
-  /* Theme Colors */
-  --bg-main: #f4f5f7;
-  --bg-card: #ffffff;
-  --border-color: #dfe1e6;
-  --text-primary: #172b4d;
-  --text-secondary: #5e6c84;
-  --accent-blue: #0052cc;
-  --accent-blue-light-bg: #e6f0ff;
-  --accent-green: #00875a;
-  --accent-red: #de350b;
+  /* Utility Colors */
+  --c-danger: #F43F5E;       /* Vibrant Pink/Red */
+  --c-danger-light: #FFF1F2;
+  --c-danger-dark: #E11D48;
+  
+  --c-green: #10B981;       /* Emerald Green (Success) */
+  --c-green-light: #ECFDF5;
+  
+  --c-blue: #3B82F6;       /* Standard Blue (Info) */
+  --c-blue-light: #DBEAFE;
+  
+  --c-gold: #F59E0B;       /* Amber/Gold (Accent) */
+  --c-gold-light: #FFFBEB;
+
+  /* Fonts */
+  --font-main: 'Inter', 'Segoe UI', sans-serif;
 }
 
+/* 2. GLOBAL RESET & BODY STYLES */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+html { 
+  font-size: 16px; 
+}
 body {
-  margin: 0;
-  padding: 0;
-  background-color: var(--bg-main);
-  color: var(--text-primary);
+  margin: 0; padding: 0; 
+  font-family: var(--font-main);
+  background-color: var(--c-bg-body);
+  color: var(--c-text-primary); 
+  line-height: 1.6;
 }
 
-/* Main content area on the right of the sidebar */
-.main-content {
-  flex-grow: 1;
-  height: 100vh;
-  overflow-y: auto;
-  /* Use the main background color */
-  background-color: var(--bg-main);
+/* 3. PAGE HEADER */
+.page-header { 
+  display: flex; 
+  align-items: center; 
+  gap: 12px; 
+  font-size: 1.85rem; 
+  font-weight: 700; 
+  margin-bottom: 8px; 
+  color: var(--c-text-primary);
+}
+.page-header svg {
+  color: var(--c-brand); 
+}
+.page-header-underline { 
+  height: 3px; 
+  width: 100%; 
+  background: var(--c-brand-gradient);
+  border-radius: 2px; 
+  margin-bottom: 24px; 
 }
 
-/* A container for all pages (POS, Inventory, Orders) */
-.page-container {
-  padding: 24px 32px;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-/* Standard Page Header */
-.page-container h2 {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-top: 0;
-  margin-bottom: 8px;
-}
-
-/* Standard helper text */
-.page-container p {
-  font-size: 15px;
-  color: var(--text-secondary);
-  margin-top: 0;
+/* 4. GLOBAL CARD STYLE */
+.card {
+  background-color: var(--c-bg-card);
+  border: none;
+  border-radius: 16px; 
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
   margin-bottom: 24px;
 }
+.card-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--c-border);
+}
+.card-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.card-body {
+  padding: 24px;
+}
+.card-footer {
+  padding: 16px 24px;
+  background-color: #FDFDFD;
+  border-top: 1px solid var(--c-border);
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+}
+.card.no-padding .card-body {
+  padding: 0;
+}
 
-/* Make buttons match the new theme */
-button {
-  font-family: inherit;
+/* 5. GLOBAL FORM & BUTTON STYLES */
+.input-field,
+select.input-field {
+  width: 100%;
+  padding: 10px 14px;
+  font-family: var(--font-main);
+  font-size: 1rem;
+  background-color: var(--c-bg-body); 
+  color: var(--c-text-primary);
+  border: 1px solid transparent; 
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+select.input-field {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1.25em 1.25em;
+  padding-right: 2.5rem;
+}
+.input-field:focus {
+  background-color: var(--c-bg-card);
+  border-color: var(--c-brand); 
+  box-shadow: 0 0 0 3px var(--c-brand-light);
+}
+.input-field::placeholder {
+  color: var(--c-text-placeholder);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+  text-align: left;
+}
+.form-group label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--c-text-secondary);
+}
+
+/* Button Base */
+.btn {
+  height: 44px;
+  padding: 0 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid transparent;
   cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Button Variants */
+.btn-primary {
+  background-image: var(--c-brand-gradient);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 10px -2px rgba(58, 106, 112, 0.3);
+}
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px -3px rgba(58, 106, 112, 0.4);
+}
+
+.btn-secondary {
+  background-color: var(--c-bg-card);
+  color: var(--c-text-primary);
+  border-color: var(--c-border);
+}
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--c-bg-body);
+  border-color: #D1D5DB;
+}
+
+.btn-danger {
+  background-color: var(--c-danger-light);
+  color: var(--c-danger-dark);
+  border-color: var(--c-danger-light);
+}
+.btn-danger:hover:not(:disabled) {
+  background-color: #FFE4E6;
+  color: #BE123C;
+  border-color: #FFE4E6;
+}
+
+/* Utility Classes */
+.no-data {
+  text-align: center;
+  padding: 40px;
+  color: var(--c-text-secondary);
+  font-style: italic;
+}
+.error-message, .success-message {
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.error-message {
+  color: var(--c-danger-dark);
+  background-color: var(--c-danger-light);
+  border: 1px solid var(--c-danger);
+}
+.success-message {
+  color: var(--c-green);
+  background-color: var(--c-green-light);
+  border: 1px solid var(--c-green);
+}
+
+/* --- 6. PAGE CONTENT WRAPPER --- */
+/* This new class constrains the max width of content on large screens */
+.page-container {
+  width: 100%;
+  max-width: 1400px; /* Sets a max width for large laptops/desktops */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* --- Mobile-Specific Styles --- */
+@media (max-width: 768px) {
+    html {
+        font-size: 15px; 
+    }
+    .page-header {
+        margin-top: 5px; 
+        font-size: 1.5rem;
+    }
+    .page-header h2 {
+        font-size: 1.5rem;
+    }
+    .page-header-underline {
+        margin-bottom: 15px;
+    }
+    .card {
+        margin-bottom: 16px;
+    }
+    .card-body {
+        padding: 16px;
+    }
+    .card-header {
+        padding: 16px;
+    }
+    .card-header h3 {
+        font-size: 1.15rem;
+    }
 }

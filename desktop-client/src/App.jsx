@@ -1,56 +1,71 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './AuthContext';
-
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from './AuthContext';
 import Layout from './Layout';
 import Login from './Login';
-import Register from './Register';
-
-import POS from './pages/POS';
-import Orders from './pages/Orders';
 import Inventory from './pages/Inventory';
+import StockLogs from './pages/StockLogs';
+import PurchaseHistory from './pages/PurchaseHistory';
+import MenuManager from './pages/MenuManager'; 
+import Analytics from './pages/Analytics';
+import AdminPanel from './pages/AdminPanel'; 
+import CreateUser from './pages/CreateUser'; // NEW IMPORT
 
-// ✅ --- (NEW) Import the new pages ---
-import SalesAnalytics from './pages/SalesAnalytics';
-import UserManagement from './pages/UserManagement';
-import CreateUser from './pages/CreateUser';
-
-
-// A protected route component
-function ProtectedRoute({ children }) {
+// Component to wrap all protected routes with the Layout
+function ProtectedRoutes() {
   const { currentUser } = useAuth();
-  return currentUser ? children : <Navigate to="/login" replace />;
+  
+  if (!currentUser) {
+    return <Navigate to="/login" />;
+  }
+
+  // Render the Layout component, which contains the Outlet
+  return <Layout />; 
 }
 
-function App() {
-  return (
-    <AuthProvider>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        
-        <Route 
-          path="/" 
-          element={
-            <ProtectedRoute>
-              <Layout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<POS />} /> 
-          <Route path="orders" element={<Orders />} />
-          <Route path="inventory" element={<Inventory />} />
+export default function App() {
+  const { currentUser } = useAuth(); 
 
-          {/* ✅ --- (NEW) Add new routes here --- */}
-          <Route path="sales" element={<SalesAnalytics />} />
-          <Route path="users" element={<UserManagement />} />
-          <Route path="users/create" element={<CreateUser />} />
-          
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Route>
-      </Routes>
-    </AuthProvider>
+  // Check roles once here
+  const isManagerOrAdmin = currentUser?.role === 'admin' || currentUser?.role === 'manager';
+  const isAdmin = currentUser?.role === 'admin';
+  
+  return (
+    <Routes>
+      {/* Route for Login Page */}
+      <Route 
+        path="/login" 
+        element={currentUser ? <Navigate to="/" /> : <Login />} 
+      />
+      
+      {/* The ProtectedRoutes wrapper uses <Layout /> internally */}
+      <Route element={<ProtectedRoutes />}> 
+        {/* Child Routes that render inside the <Outlet /> within <Layout /> */}
+        
+        {/* Public Protected Routes */}
+        <Route index element={<Inventory />} />
+        <Route path="/purchase-history" element={<PurchaseHistory />} />
+        <Route path="/stock-logs" element={<StockLogs />} />
+        <Route path="/analytics" element={<Analytics />} />
+
+        {/* Role-Gated Routes */}
+        <Route 
+          path="/menu-manager" 
+          element={isManagerOrAdmin ? <MenuManager /> : <Navigate to="/" />}
+        />
+        <Route 
+          path="/admin-panel" 
+          element={isAdmin ? <AdminPanel /> : <Navigate to="/" />}
+        />
+        <Route 
+          path="/create-user" // NEW ROUTE
+          element={isAdmin ? <CreateUser /> : <Navigate to="/" />}
+        />
+        
+        {/* Fallback route */}
+        <Route path="*" element={<Navigate to="/" />} />
+      </Route>
+
+    </Routes>
   );
 }
-
-export default App;

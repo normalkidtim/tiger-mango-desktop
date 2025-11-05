@@ -1,66 +1,75 @@
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "./firebase"; // ✅ CORRECTED: Import auth directly
-import "./assets/styles/auth.css";
+// web-client/src/Login.jsx
+
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom'; 
+import { useAuth } from './AuthContext';
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [welcome, setWelcome] = useState("");
-  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  
+  const { login } = useAuth();
+  const navigate = useNavigate(); 
 
-  const handleLogin = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
-    setError("");
-    setWelcome("");
-
     try {
-      // ✅ CORRECTED: Use the imported auth object directly
-      const cred = await signInWithEmailAndPassword(auth, email, password);
-
-      if (window.electronAPI?.authLogin) {
-        window.electronAPI.authLogin(email, password);
-      }
-
-      setWelcome(`👋 Welcome, ${cred.user.email}`);
-      setTimeout(() => navigate("/inventory"), 1200);
+      setError('');
+      setLoading(true);
+      await login(email, password);
+      navigate('/'); 
     } catch (err) {
-      setError("❌ Invalid email or password");
+      // --- UPDATED ERROR HANDLING ---
+      // Check for our custom verification error from AuthContext
+      if (err.message.includes("verify your email")) {
+        setError(err.message);
+      } else {
+        // Handle all other errors (wrong password, etc.)
+        setError('Failed to log in. Please check your email and password.');
+      }
       console.error(err);
+      // --- END UPDATED BLOCK ---
     }
-  };
+    setLoading(false);
+  }
 
   return (
     <div className="auth-container">
-      <div className="auth-card">
-        <h1 className="auth-title">🟡 Tiger Mango</h1>
-        <h2 className="auth-subtitle">Login</h2>
-        {error && <p className="auth-error">{error}</p>}
-        {welcome && <p className="auth-success">{welcome}</p>}
-        <form onSubmit={handleLogin} className="auth-form">
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <button type="submit" className="auth-btn">
-            Login
+      <div className="auth-card card"> 
+        <h2 className="auth-title">Tealicieux</h2>
+        {error && <div className="error-message">{error}</div>}
+        
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="form-group">
+            <label>Email</label>
+            <input 
+              className="input-field"
+              type="email" 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+              required 
+            />
+          </div>
+          <div className="form-group">
+            <label>Password</label>
+            <input 
+              className="input-field"
+              type="password" 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              required 
+            />
+          </div>
+          <button 
+            disabled={loading} 
+            type="submit" 
+            className="btn btn-primary auth-button"
+          >
+            {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
-        <p className="auth-switch">
-          Don’t have an account? <Link to="/register">Register here</Link>
-        </p>
       </div>
     </div>
   );

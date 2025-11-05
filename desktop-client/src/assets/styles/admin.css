@@ -1,0 +1,94 @@
+/* web-client/src/assets/styles/admin.css */
+
+/* .card styles come from global.css */
+
+/* --- User Grid & Card Layout --- */
+.user-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+/* User Info styles inside the card */
+.user-info h4 {
+    margin: 0 0 10px 0;
+    font-size: 1.2rem;
+    color: var(--c-text-primary);
+    word-break: break-word;
+}
+.user-email, .user-role, .user-contact {
+    font-size: 0.9rem;
+    color: var(--c-text-secondary);
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    word-break: break-all;
+}
+.user-role {
+    margin-top: 10px;
+}
+.user-info .user-contact {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px dashed var(--c-border);
+    color: var(--c-text-primary); 
+}
+.user-info .user-email {
+    margin-top: 10px;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px dashed var(--c-border);
+    color: var(--c-text-primary); 
+}
+
+/* Role Badge (UPDATED to new palette) */
+.role-badge {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    margin-left: 5px;
+}
+.role-badge.admin { background-color: var(--c-danger-light); color: var(--c-danger); } 
+.role-badge.manager { background-color: var(--c-gold-light); color: var(--c-gold); } 
+.role-badge.employee { background-color: var(--c-brand-light); color: var(--c-brand); } 
+
+/* --- Action Buttons --- */
+.user-card-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 20px;
+    margin-top: 20px;
+    border-top: 1px solid var(--c-border);
+}
+
+.read-only-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+/* Specific button for success (save) */
+.btn-success {
+  background-color: var(--c-green);
+  color: white;
+  border: none;
+}
+.btn-success:hover:not(:disabled) {
+  background-color: #047857; /* Darker green */
+}
+
+
+/* --- Mobile Responsiveness --- */
+@media (max-width: 768px) {
+    .user-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    .read-only-actions {
+        grid-template-columns: 1fr; /* Stack buttons on mobile */
+    }
+}

@@ -1,250 +1,371 @@
-import React, { useState, useEffect } from 'react';
-import { db } from '../firebase';
-import { collection, getDocs } from 'firebase/firestore'; 
+// web-client/src/pages/Inventory.jsx
+import React, { useEffect, useState } from "react";
+import { db } from "../firebase";
+import { 
+  doc, 
+  onSnapshot, 
+  updateDoc, 
+  addDoc, 
+  collection, 
+  serverTimestamp, 
+  setDoc, 
+  deleteDoc, 
+  deleteField,
+  query,
+} from "firebase/firestore";
+import { useAuth } from "../AuthContext";
+import { 
+  FiGrid, 
+  FiBox, 
+  FiPackage, 
+  FiPlus, 
+  FiAlertCircle, 
+  FiTrash2, 
+  FiEdit, 
+  FiCheck, 
+  FiX 
+} from "react-icons/fi"; 
 
-import '../assets/styles/inventory.css';
-import '../assets/styles/filters.css';
-import '../assets/styles/tables.css'; 
+// Helper function to format keys
+const getDisplayName = (key) => key.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+const slugify = (text) => text.toLowerCase().replace(/\s/g, '-').replace(/[^a-z0-9-]/g, '');
 
-// --- MODAL COMPONENT (Defined within the file for simplicity) ---
-const EditStockModal = ({ item, onClose, onSave }) => {
-    // Use toString() to handle number input field state correctly
-    const [newStock, setNewStock] = useState(item.stock.toString()); 
-    const [isSaving, setIsSaving] = useState(false);
-
-    const handleSave = async () => {
-        const value = parseInt(newStock);
-        if (isNaN(value) || value < 0) {
-            alert("Please enter a valid, non-negative number for stock.");
-            return;
-        }
-
-        setIsSaving(true);
-        try {
-            await onSave(item.firestoreDoc, item.firestoreField, value);
-            onClose();
-        } catch (error) {
-            alert(`Failed to save stock: ${error.message}`);
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    return (
-        <div className="modal-backdrop">
-            <div className="modal-content">
-                <h3>Edit Stock for {item.name}</h3>
-                <p>Category: <strong>{item.category}</strong></p>
-                <p>Current Stock: <strong>{item.stock}</strong></p>
-
-                <div className="form-group">
-                    <label htmlFor="newStock">New Stock Quantity:</label>
-                    <input
-                        id="newStock"
-                        type="number"
-                        value={newStock}
-                        onChange={(e) => setNewStock(e.target.value)}
-                        min="0"
-                        required
-                    />
-                </div>
-                
-                <div className="modal-actions">
-                    <button onClick={onClose} className="button-cancel" disabled={isSaving}>
-                        Cancel
-                    </button>
-                    <button onClick={handleSave} className="button-primary" disabled={isSaving}>
-                        {isSaving ? 'Saving...' : 'Save Changes'}
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
-// --- END MODAL COMPONENT ---
-
-
-// --- DATA MAPPING FOR USER-FRIENDLY NAMES AND CATEGORIES ---
-const FRIENDLY_NAMES = {
-  'medium-cup': 'Medium Cup', 'large-cup': 'Large Cup', 'hot-cup': 'Hot Cup',
-  'sealing-film': 'Sealing Film (Lid)', 'dome-lid': 'Dome Lid', 'flat-lid': 'Flat Lid',
-  'hot-cup-lid': 'Hot Cup Lid', 'boba-straw': 'Boba Straw', 'regular-straw': 'Regular Straw',
-  'thin-straw': 'Thin Straw', 'pearl': 'Pearl', 'nata': 'Nata De Coco',
-  'fruit-jelly': 'Fruit Jelly', 'coffee-jelly': 'Coffee Jelly', 'creamcheese': 'Creamcheese',
-  'crushed-oreo': 'Crushed Oreo', 'crushed-graham': 'Crushed Graham', 'coffee-shot': 'Coffee Shot',
-};
-
-const ITEM_CATEGORY_MAP = {
-  'medium-cup': 'Cups', 'large-cup': 'Cups', 'hot-cup': 'Cups',
-  'sealing-film': 'Lids', 'dome-lid': 'Lids', 'flat-lid': 'Lids', 'hot-cup-lid': 'Lids',
-  'boba-straw': 'Straws', 'regular-straw': 'Straws', 'thin-straw': 'Straws', 
-  'pearl': 'Add-ons', 'nata': 'Add-ons', 'fruit-jelly': 'Add-ons', 'coffee-jelly': 'Add-ons',
-  'creamcheese': 'Add-ons', 'crushed-oreo': 'Add-ons', 'crushed-graham': 'Add-ons', 'coffee-shot': 'Add-ons',
-};
-
-
-function Inventory() {
-  const [inventory, setInventory] = useState([]);
+export default function Inventory() {
+  const { currentUser } = useAuth();
+  const [inventoryData, setInventoryData] = useState({}); 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [filter, setFilter] = useState('All');
-  const [itemToEdit, setItemToEdit] = useState(null);
-
-  const filterCategories = ['All', 'Cups', 'Lids', 'Straws', 'Add-ons'];
+  
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newItemName, setNewItemName] = useState('');
+  const [newItemCategory, setNewItemCategory] = useState(''); 
+  const [saveStatus, setSaveStatus] = useState('');
+  
+  const categoryIcons = {
+    cups: FiBox,
+    lids: FiPackage,
+    straws: FiAlertCircle,
+    'add-ons': FiPlus,
+  };
 
   useEffect(() => {
-    fetchInventory();
+    const q = query(collection(db, 'inventory'));
+    const unsub = onSnapshot(q, (querySnapshot) => {
+      const data = {};
+      querySnapshot.forEach((docSnap) => {
+        data[docSnap.id] = docSnap.data();
+      });
+      setInventoryData(data);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching inventory:", error);
+      setLoading(false);
+      setSaveStatus('❌ Failed to load inventory categories.');
+    });
+    return () => unsub();
   }, []);
+  
+  const updateStockInFirebase = async (docId, field, value) => {
+    const numericValue = Number(value);
+    if (isNaN(numericValue) || numericValue < 0) return;
 
-  const fetchInventory = async () => {
-    setLoading(true);
-    setError(null);
+    const oldStockData = inventoryData[docId] || {};
+    const oldValue = oldStockData[field] ?? 0;
+    
+    if (oldValue === numericValue) {
+      return;
+    }
+
     try {
-      const querySnapshot = await getDocs(collection(db, 'inventory'));
-      const inventoryList = [];
-      
-      querySnapshot.docs.forEach(docSnapshot => {
-        const firestoreDocId = docSnapshot.id; 
-        const data = docSnapshot.data();
-
-        for (const itemKey in data) {
-          if (data.hasOwnProperty(itemKey)) {
-            const friendlyName = FRIENDLY_NAMES[itemKey] || itemKey;
-            const categoryName = ITEM_CATEGORY_MAP[itemKey] || firestoreDocId; 
-            
-            inventoryList.push({
-              id: `${firestoreDocId}/${itemKey}`, 
-              name: friendlyName, 
-              category: categoryName, 
-              // Convert stock to number if it's stored as a string
-              stock: data[itemKey] !== null ? Number(data[itemKey]) : 0, 
-              firestoreDoc: firestoreDocId, 
-              firestoreField: itemKey,      
-            });
-          }
-        }
+      await updateDoc(doc(db, 'inventory', docId), {
+        [field]: numericValue,
       });
       
-      setInventory(inventoryList);
-    } catch (err) {
-      console.error("Error fetching inventory: ", err);
-      setError("Failed to fetch inventory.");
-    }
-    setLoading(false);
-  };
-  
-  // Function to securely update stock via Electron backend
-  const handleSaveStock = async (docId, fieldId, newStock) => {
-    // The preload.js exposes this channel to the main process
-    const result = await window.electron.updateInventoryStock(docId, fieldId, newStock);
-    
-    if (result.success) {
-      alert(`Stock for ${FRIENDLY_NAMES[fieldId] || fieldId} successfully updated to ${newStock}.`);
-      fetchInventory(); // Re-fetch inventory to update the list
-    } else {
-      // Throw error so the Modal can catch it
-      throw new Error(result.error); 
+      await addDoc(collection(db, "stock-logs"), {
+        item: `${docId} - ${getDisplayName(field)}`,
+        oldValue: oldValue,
+        newValue: numericValue,
+        user: currentUser?.email || 'unknown',
+        timestamp: serverTimestamp(),
+      });
+    } catch (error) { 
+      console.error("Error updating stock:", error);
+      setSaveStatus(`❌ Error updating ${docId}: ${error.message}`);
+      setTimeout(() => setSaveStatus(''), 5000);
     }
   };
-
-  const handleEdit = (item) => {
-    setItemToEdit(item);
+  
+  const handleAddNewCategory = async () => {
+    const trimmedName = newCategoryName.trim();
+    const docId = slugify(trimmedName);
+    if (!trimmedName || inventoryData[docId]) {
+      alert('Invalid or duplicate category name.');
+      return;
+    }
+    try {
+        await setDoc(doc(db, 'inventory', docId), {}); 
+        setNewCategoryName('');
+        setSaveStatus(`✅ New stock category "${trimmedName}" created!`);
+    } catch (error) {
+        console.error("Error creating new category:", error);
+        setSaveStatus(`❌ Error creating new category: ${error.message}`);
+        setTimeout(() => setSaveStatus(''), 5000);
+    }
   };
 
-  const filteredInventory = inventory.filter(item => {
-    if (filter === 'All') return true;
-    return item.category === filter;
-  });
-
-  // --- RENDERING LOGIC ---
-  const renderItemRow = (item) => (
-    <tr key={item.id}>
-      <td className="item-name">{item.name}</td>
-      <td className="stock-count">{item.stock !== undefined ? item.stock : 'N/A'}</td>
-      <td className="item-actions">
-        <button 
-          className="edit-btn" 
-          onClick={() => handleEdit(item)} 
-        >
-          Edit
-        </button>
-      </td>
-    </tr>
-  );
+  const handleAddNewItem = async () => {
+    const docId = newItemCategory;
+    const trimmedName = newItemName.trim();
+    const fieldName = slugify(trimmedName);
+    if (!docId || !trimmedName) {
+      alert('Select a category and enter an item name.');
+      return;
+    }
+    if (inventoryData[docId] && inventoryData[docId][fieldName] !== undefined) {
+      alert(`Item "${trimmedName}" already exists in this category.`);
+      return;
+    }
+    try {
+        await updateDoc(doc(db, 'inventory', docId), { [fieldName]: 0 });
+        setNewItemName('');
+        setNewItemCategory('');
+        setSaveStatus(`✅ New item "${trimmedName}" added to ${getDisplayName(docId)}!`);
+    } catch (error) {
+        console.error("Error adding new item:", error);
+        setSaveStatus(`❌ Error adding new item: ${error.message}`);
+        setTimeout(() => setSaveStatus(''), 5000);
+    }
+  };
   
-  const renderInventoryTable = (items, category) => (
-    <div key={category} className="category-group table-box">
-      <h3 className="category-header">{category}</h3>
-      <table className="inventory-table">
-        <thead>
-          <tr>
-            <th>Item Name</th>
-            <th className="stock-col">Stock</th>
-            <th className="action-col">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map(item => renderItemRow(item))}
-        </tbody>
-      </table>
-    </div>
-  );
-  // --- END RENDERING LOGIC ---
+  const handleDeleteCategory = async (docId, categoryName) => {
+    if (!window.confirm(`WARNING: This will permanently delete the entire "${categoryName}" inventory category and all its stock levels. Continue?`)) return;
+    try {
+        await deleteDoc(doc(db, 'inventory', docId));
+        setSaveStatus(`🗑️ Stock category "${categoryName}" deleted successfully.`);
+    } catch (error) {
+        console.error("Error deleting category:", error);
+        setSaveStatus(`❌ Error deleting category: ${error.message}`);
+        setTimeout(() => setSaveStatus(''), 5000);
+    }
+  };
+
+  const handleDeleteItem = async (docId, field, itemName) => {
+    if (!window.confirm(`Are you sure you want to delete the item "${itemName}" from ${getDisplayName(docId)}? This will delete its stock level forever.`)) return;
+    try {
+        await updateDoc(doc(db, 'inventory', docId), { [field]: deleteField() });
+        setSaveStatus(`🗑️ Item "${itemName}" deleted successfully.`);
+    } catch (error) {
+        console.error("Error deleting item:", error);
+        setSaveStatus(`❌ Error deleting item: ${error.message}`);
+        setTimeout(() => setSaveStatus(''), 5000);
+    }
+  };
 
 
-  if (loading) return <div className="loading">Loading inventory...</div>;
-  if (error) return <div className="error-message">{error}</div>;
+  if (loading) {
+      return (
+          <div className="page-container">
+              <div className="page-header"><FiGrid /><h2>Inventory Overview</h2></div>
+              <div className="page-header-underline"></div>
+              <p className="no-data">Loading inventory data...</p>
+          </div>
+      );
+  }
+
+  const availableCategories = Object.keys(inventoryData).sort((a, b) => a.localeCompare(b));
 
   return (
-    <div className="inventory-container">
-        {/* MODAL RENDER */}
-        {itemToEdit && (
-            <EditStockModal
-                item={itemToEdit}
-                onClose={() => setItemToEdit(null)}
-                onSave={handleSaveStock}
-            />
-        )}
-        {/* END MODAL RENDER */}
-
-      <h2>Inventory Management</h2>
+    <div className="page-container">
+      <div className="page-header"><FiGrid /><h2>Inventory Overview</h2></div>
+      <div className="page-header-underline"></div>
       
-      <div className="filter-container">
-        {filterCategories.map(category => (
-          <button
-            key={category}
-            className={`filter-btn ${filter === category ? 'active' : ''}`}
-            onClick={() => setFilter(category)}
-          >
-            {category}
-          </button>
-        ))}
+      {saveStatus && (
+        <div className={saveStatus.startsWith('❌') ? 'error-message' : 'success-message'}>
+            {saveStatus}
+        </div>
+      )}
+
+      {/* --- ADD NEW CATEGORY & ITEM FORMS --- */}
+      <div className="form-row-2-col" style={{ marginBottom: '24px' }}>
+        
+        <div className="card">
+          <div className="card-header">
+            <h3><FiBox /> Add New Stock Category</h3>
+          </div>
+          <div className="card-body">
+            <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Category Name (e.g., "Paper Bags")</label>
+                <input 
+                    type="text"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    placeholder="Enter new stock category name"
+                    className="input-field"
+                />
+            </div>
+          </div>
+          <div className="card-footer">
+            <button 
+                onClick={handleAddNewCategory} 
+                className="btn btn-primary"
+                disabled={!newCategoryName.trim()}
+                style={{ width: '100%' }}
+            >
+                <FiPlus /> Create Category
+            </button>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="card-header">
+            <h3><FiPlus /> Add New Item Type</h3>
+          </div>
+          <div className="card-body">
+            <div className="form-group">
+                <label>Select Existing Category</label>
+                <select 
+                    value={newItemCategory} 
+                    onChange={(e) => setNewItemCategory(e.target.value)}
+                    className="input-field"
+                >
+                    <option value="" disabled>Select category...</option>
+                    {availableCategories.map(catId => (
+                        <option key={catId} value={catId}>{getDisplayName(catId)}</option>
+                    ))}
+                </select>
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Item Name (e.g., "Bamboo Straw")</label>
+                <input 
+                    type="text"
+                    value={newItemName}
+                    onChange={(e) => setNewItemName(e.target.value)}
+                    placeholder="New item name"
+                    className="input-field"
+                />
+            </div>
+          </div>
+          <div className="card-footer">
+            <button 
+                onClick={handleAddNewItem} 
+                className="btn btn-secondary"
+                disabled={!newItemCategory || !newItemName.trim()}
+                style={{ width: '100%' }}
+            >
+                <FiPlus /> Add Item
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div className="inventory-display-content"> 
-        {filter === 'All' ? (
-          <div>
-            {filterCategories.filter(c => c !== 'All').map(category => {
-              const itemsInCategory = inventory.filter(item => item.category === category);
-              
-              if (itemsInCategory.length === 0) return null; 
-
-              return renderInventoryTable(itemsInCategory, category);
-            })}
-          </div>
-        ) : (
-          <div className="filtered-table-wrapper">
-            {filteredInventory.length > 0 ? (
-              renderInventoryTable(filteredInventory, filter)
-            ) : (
-              <p>No items found for category "{filter}".</p>
-            )}
-          </div>
-        )}
+      {/* --- INVENTORY LISTING (DYNAMICALLY GENERATED) --- */}
+      <div className="inventory-sections">
+        {availableCategories.map(docId => {
+          const categoryName = getDisplayName(docId);
+          const CategoryIcon = categoryIcons[docId] || FiBox;
+          
+          return (
+            <InventoryCard 
+              key={docId}
+              title={categoryName}
+              items={inventoryData[docId]} 
+              icon={<CategoryIcon />}
+              docId={docId}
+              onUpdate={updateStockInFirebase}
+              onDelete={handleDeleteCategory}
+              onDeleteItem={handleDeleteItem} 
+            />
+          );
+        })}
       </div>
-
     </div>
   );
 }
 
-export default Inventory;
+// --- UPDATED InventoryCard Component ---
+function InventoryCard({ title, items, icon, docId, onUpdate, onDelete, onDeleteItem }) {
+  const [editingItemId, setEditingItemId] = useState(null);
+  const [editValue, setEditValue] = useState(0);
+
+  const itemArray = Object.entries(items)
+    .map(([key, value]) => ({ id: key, name: getDisplayName(key), stock: value }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const handleStartEdit = (item) => {
+    setEditingItemId(item.id);
+    setEditValue(item.stock);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingItemId(null);
+    setEditValue(0);
+  };
+
+  const handleSaveEdit = (item) => {
+    if (window.confirm(`Are you sure you want to change ${item.name} from ${item.stock} to ${editValue}?`)) {
+      onUpdate(docId, item.id, editValue);
+    }
+    handleCancelEdit(); 
+  };
+
+  return (
+    // UPDATED: Added "no-padding" class to use the global.css rule
+    <div className="card no-padding">
+      <div className="card-header" style={{ justifyContent: 'space-between', display: 'flex', alignItems: 'center' }}>
+        <h3>{icon} {title}</h3>
+        <button 
+          onClick={() => onDelete(docId, title)}
+          className="btn btn-danger"
+          style={{ height: '36px', padding: '0 10px', fontSize: '0.9rem' }}
+          title={`Delete the entire ${title} category`}
+        >
+          <FiTrash2 size={16} />
+        </button>
+      </div>
+      
+      {/* UPDATED: Removed the inline style from card-body */}
+      <div className="card-body">
+        <div className="inventory-item-list">
+          {itemArray.length > 0 ? itemArray.map((item) => (
+            <div className="inventory-item" key={item.id}>
+              <span className="inventory-item-name">{item.name}</span>
+              
+              {editingItemId === item.id ? (
+                // --- EDIT MODE ---
+                <div className="inventory-item-stock edit-mode">
+                  <input 
+                    type="number" 
+                    value={editValue}
+                    onChange={(e) => setEditValue(Number(e.target.value))}
+                    autoFocus
+                    onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit(item)}
+                  />
+                  <button onClick={() => handleSaveEdit(item)} className="btn-save-stock" title="Save">
+                    <FiCheck size={18} />
+                  </button>
+                  <button onClick={handleCancelEdit} className="btn-cancel-stock" title="Cancel">
+                    <FiX size={18} />
+                  </button>
+                </div>
+              ) : (
+                // --- READ-ONLY MODE ---
+                <div className="inventory-item-stock read-only">
+                  <span className="inventory-item-value">{item.stock}</span>
+                  <button onClick={() => handleStartEdit(item)} className="btn-edit-stock" title="Edit">
+                    <FiEdit size={16} />
+                  </button>
+                  <button 
+                    onClick={() => onDeleteItem(docId, item.id, item.name)}
+                    className="inventory-delete-btn"
+                    title={`Delete ${item.name} item`}
+                  >
+                    <FiTrash2 size={16} />
+                  </button>
+                </div>
+              )}
+            </div>
+          )) : <p className="no-items-message">No items. Use the form above to add one.</p>}
+        </div>
+      </div>
+    </div>
+  );
+}

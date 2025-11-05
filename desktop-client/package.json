@@ -1,68 +1,62 @@
 {
-  "name": "tiger-mango-desktop",
+  "name": "tealicieux-desktop-app",
+  "private": true,
   "version": "1.0.0",
-  "description": "Tiger Mango Inventory Management",
-  "main": "electron/main.cjs",
   "type": "module",
-  "author": "Tiger Mango",
-  "homepage": "./",
+  "description": "Desktop application for Tealicieux",
+  "author": "normalkidtim",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
+    "dev:electron": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .\"",
     "build": "vite build",
-    "preview": "vite preview",
-    "electron": "electron .",
-    "electron-dev": "vite & electron .",
-    "electron-build": "vite build && electron .",
-    "dist": "npm run build && electron-builder",
-    "dist:win": "npm run build && electron-builder --win",
-    "dist:mac": "npm run build && electron-builder --mac",
-    "dist:linux": "npm run build && electron-builder --linux"
+    "build:electron": "npm run build && electron-builder",
+    "lint": "eslint .",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "firebase": "^10.7.1",
-    "firebase-admin": "^12.0.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "firebase": "^12.3.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
     "react-icons": "^5.5.0",
-    "react-router-dom": "^6.21.1",
-    "recharts": "^2.15.4"
+    "react-router-dom": "^7.9.4",
+    "recharts": "^3.2.1"
   },
   "devDependencies": {
-    "@types/react": "^18.2.43",
-    "@types/react-dom": "^18.2.17",
-    "@vitejs/plugin-react": "^4.2.1",
-    "electron": "^28.1.0",
-    "electron-builder": "^24.9.1",
-    "vite": "^5.0.8"
+    "@eslint/js": "^9.35.0",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.2",
+    "autoprefixer": "^10.4.21",
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "electron": "^31.0.1",
+    "electron-builder": "^24.13.3",
+    "eslint": "^9.35.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^16.4.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.13",
+    "vite": "^7.1.6",
+    "wait-on": "^7.2.0"
   },
   "build": {
-    "appId": "com.tigermango.inventory",
-    "productName": "Tiger Mango Inventory",
-    "copyright": "Copyright © 2024 Tiger Mango",
-    "directories": {
-      "output": "release"
-    },
+    "appId": "com.tealicieux.desktop",
+    "productName": "Tealicieux",
     "files": [
       "dist/**/*",
-      "electron/**/*",
-      "package.json"
+      "electron/**/*"
     ],
-    "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
-      ]
+    "directories": {
+      "buildResources": "build",
+      "output": "dist-electron"
     },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "Tiger Mango Inventory"
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg"
     }
   }
 }
